@@ -39,4 +39,29 @@ label[for="autoLocationToggle"],
   padding: 4px 8px;
   border-radius: 4px;
 }
+/* 🧭 Tab Navigation */
+.tab-nav {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  background-color: #f3f3f3;
+  padding: 10px 0;
+  border-bottom: 1px solid #ccc;
+  font-family: sans-serif;
+}
+
+.tab-nav a {
+  text-decoration: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  background-color: #e0e0e0;
+  color: #333;
+  font-weight: 600;
+  transition: background-color 0.3s ease;
+}
+
+.tab-nav a:hover {
+  background-color: #d1c4e9;
+  color: #000;
+}
 
