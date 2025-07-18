@@ -11,7 +11,8 @@ app = Flask(__name__)
 CORS(app)
 
 # Connect to Supabase Postgres
-conn = psycopg2.connect(os.getenv("DATABASE_URL"))
+conn = psycopg2.connect(os.getenv("postgresql://postgres:Rosario1072005hackdogkagid@db.neigxicrhalonnsaqkud.supabase.co:5432/postgres
+"))
 cursor = conn.cursor()
 
 @app.route('/api/stores', methods=['GET', 'POST'])
