@@ -76,15 +76,19 @@ useLocationBtn.addEventListener('click', () => getGeolocation());
 
     const imageUrl = supabase.storage.from('dish-images').getPublicUrl(filePath).publicUrl;
 
-    const { error: insertError } = await supabase.from('foods').insert([{
-      name: form.get('name'),
-      description: form.get('description'),
-      price: parseFloat(form.get('price')),
-      image_url: imageUrl,
-      uploader_id: userId
-    }]);
+   const { error: insertError } = await supabase.from('foods').insert([{
+  name: form.get('name'),
+  description: form.get('description'),
+  price: parseFloat(form.get('price')),
+  image_url: imageUrl,
+  uploader_id: userId  // assuming you’ve already fetched this earlier
+}]);
 
-    if (insertError) alert("❌ Dish insert failed: " + insertError.message);
-    else alert("✅ Dish uploaded!");
+if (insertError) {
+  alert("❌ Dish insert failed: " + insertError.message);
+} else {
+  alert("✅ Dish uploaded!");
+}
+
   });
 })();
