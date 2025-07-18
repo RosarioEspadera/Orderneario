@@ -1,1 +1,42 @@
+@media (forced-colors: active) {
+  /* updated styles for modern high contrast mode */
+}
+/* 📍 Location Controls Styling */
+#useLocationBtn {
+  padding: 8px 12px;
+  font-size: 0.95rem;
+  border: none;
+  border-radius: 6px;
+  background-color: #2e7d32;
+  color: #fff;
+  cursor: pointer;
+  margin-top: 6px;
+  transition: background-color 0.3s ease;
+}
+
+#useLocationBtn:hover {
+  background-color: #1b5e20;
+}
+
+#autoLocationToggle {
+  margin-right: 6px;
+  accent-color: #2e7d32;
+}
+
+label[for="autoLocationToggle"],
+#locationDisplay {
+  font-size: 0.9rem;
+  color: #333;
+  margin-top: 10px;
+  display: block;
+}
+
+#locationDisplay {
+  margin-top: 8px;
+  font-weight: 500;
+  background: #e8f5e9;
+  border-left: 4px solid #66bb6a;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
 
