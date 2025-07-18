@@ -11,7 +11,7 @@ document.getElementById('loginBtn').addEventListener('click', async () => {
   const { error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: location.origin + '/index.html'
+      redirectTo: location.origin + '/dashboard.html'
     }
   });
   if (error) console.error("❌ Login error:", error.message);
