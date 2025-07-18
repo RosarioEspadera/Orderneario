@@ -9,7 +9,7 @@ document.getElementById('loginBtn').addEventListener('click', async () => {
   const { error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: location.origin + '/Orderneario/docs/map.html'  // ✅ redirects to map.html
+      redirectTo: location.origin + 'https://rosarioespadera.github.io/Orderneario/dashboard.html'  // ✅ redirects to map.html
     }
   });
   if (error) {
