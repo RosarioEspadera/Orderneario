@@ -1,24 +1,42 @@
-<!-- index.html -->
+<!-- docs/index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Welcome to Orderneario</title>
+  <title>Orderneario</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <header>
-    <h1>🍽️ Welcome to Orderneario</h1>
-    <p>Find nearby food spots or register your own.</p>
-  </header>
+  <nav class="tab-nav">
+    <a href="dashboard.html">📋 Dashboard</a>
+    <a href="map.html">🗺️ Map</a>
+    <a href="profile.html">👤 Profile</a>
+  </nav>
 
   <main>
+    <h1>🍽️ Welcome to Orderneario</h1>
+    <p>Map-based ordering, delicious dishes, and seamless uploads for store owners.</p>
+
+    <button id="loginBtn">🔐 Sign in with Google</button>
+    <!-- 🔐 Role Selection -->
+      <label for="roleSelect">Choose your role:</label>
+      <select id="roleSelect">
+        <option value="consumer">🛍️ Consumer</option>
+        <option value="store_owner">👩‍🍳 Store Owner</option>
+      </select>
+
     <button id="loginBtn">Sign in with Google</button>
+    <p id="statusMsg"></p>
+
+    <div style="margin-top: 20px;">
+      <a href="map.html">🗺️ Explore Nearby Stores</a> |
+      <a href="dashboard.html">👩‍🍳 Register Your Store</a>
+    </div>
+
     <p id="statusMsg"></p>
   </main>
 
   <script type="module" src="src/js/auth.js"></script>
 </body>
 </html>
-
