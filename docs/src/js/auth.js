@@ -2,28 +2,17 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js';
 
 const SUPABASE_URL = 'https://neigxicrhalonnsaqkud.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJvcWlrd2ZhZW53cWlwZHlkaHd2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI2MTYxMzksImV4cCI6MjA2ODE5MjEzOX0.CpUCA3X4bNIjOCtxrdOZ2kciXEHEogukBie9IOlHpno'; // truncated
-
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5laWd4aWNyaGFsb25uc2Fxa3VkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI4NDQ3NjcsImV4cCI6MjA2ODQyMDc2N30.43DDOz-38NSc0nUejfTGOMD4xYBfzNvy4n0NFZWEfeo';
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// Handle login
 document.getElementById('loginBtn').addEventListener('click', async () => {
   const { error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: location.origin + '/dashboard.html'
+      redirectTo: location.origin + '/Orderneario/docs/map.html'  // ✅ redirects to map.html
     }
   });
-  if (error) console.error("❌ Login error:", error.message);
-});
-
-// Show user info if signed in
-(async () => {
-  const { data: userData } = await supabase.auth.getUser();
-  if (userData?.user) {
-    const user = userData.user;
-    document.getElementById('userInfo').style.display = 'block';
-    document.getElementById('userName').textContent = `Signed in as ${user.email}`;
+  if (error) {
+    document.getElementById('statusMsg').textContent = `❌ Login error: ${error.message}`;
   }
-})();
-
+});
