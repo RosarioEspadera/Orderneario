@@ -2,11 +2,11 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js';
 
 const SUPABASE_URL = 'https://neigxicrhalonnsaqkud.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5laWd4aWNyaGFsb25uc2Fxa3VkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI4NDQ3NjcsImV4cCI6MjA2ODQyMDc2N30.43DDOz-38NSc0nUejfTGOMD4xYBfzNvy4n0NFZWEfeo'; // truncated
-
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5laWd4aWNyaGFsb25uc2Fxa3VkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI4NDQ3NjcsImV4cCI6MjA2ODQyMDc2N30.43DDOz-38NSc0nUejfTGOMD4xYBfzNvy4n0NFZWEfeo'; // 🔐 Replace with real key
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 (async () => {
+  // 🧠 Check login
   const { data: userData, error } = await supabase.auth.getUser();
   if (error || !userData?.user) {
     alert("You're not signed in.");
@@ -14,28 +14,63 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   }
 
   const userId = userData.user.id;
-const autoToggle = document.getElementById('autoLocationToggle');
-const useLocationBtn = document.getElementById('useLocationBtn');
-const locationDisplay = document.getElementById('locationDisplay');
 
-function applyLocation(coords) {
-  document.querySelector('[name=lat]').value = coords.latitude;
-  document.querySelector('[name=lng]').value = coords.longitude;
-  locationDisplay.textContent = `Coordinates: ${coords.latitude.toFixed(5)}, ${coords.longitude.toFixed(5)}`;
-}
+  // 🔐 Store selected role in Supabase metadata
+  const selectedRole = localStorage.getItem('selectedRole');
+  if (selectedRole) {
+    await supabase.auth.updateUser({
+      data: { role: selectedRole }
+    });
+    console.log("✅ Role saved to profile:", selectedRole);
+    localStorage.removeItem('selectedRole'); // 🔃 Clean local cache
+  }
 
-function getGeolocation() {
-  navigator.geolocation.getCurrentPosition(
-    (pos) => applyLocation(pos.coords),
-    (err) => alert("Location error: " + err.message)
-  );
-}
+  // 🎯 Load current role and adapt UI
+  const role = userData.user.user_metadata?.role;
+  console.log("👤 Logged in as:", role);
 
-autoToggle.addEventListener('change', () => {
-  if (autoToggle.checked) getGeolocation();
-});
+  // 🧭 Build tab nav dynamically
+  const nav = document.querySelector('.tab-nav');
+  nav.innerHTML = '';
+  if (role === 'store_owner') {
+    nav.innerHTML = `
+      <a href="dashboard.html">📋 Dashboard</a>
+      <a href="map.html">🗺️ Map</a>
+      <a href="profile.html">👤 Profile</a>
+    `;
+    document.getElementById('storeUploadPanel').style.display = 'block';
+  } else if (role === 'consumer') {
+    nav.innerHTML = `
+      <a href="map.html">🗺️ Map</a>
+      <a href="profile.html">👤 Profile</a>
+    `;
+    document.getElementById('mapLinkOnly').style.display = 'block';
+  }
 
-useLocationBtn.addEventListener('click', () => getGeolocation());
+  // 📍 Location logic
+  const autoToggle = document.getElementById('autoLocationToggle');
+  const useLocationBtn = document.getElementById('useLocationBtn');
+  const locationDisplay = document.getElementById('locationDisplay');
+
+  function applyLocation(coords) {
+    document.querySelector('[name=lat]').value = coords.latitude;
+    document.querySelector('[name=lng]').value = coords.longitude;
+    locationDisplay.textContent = `📍 Coordinates: ${coords.latitude.toFixed(5)}, ${coords.longitude.toFixed(5)}`;
+  }
+
+  function getGeolocation() {
+    navigator.geolocation.getCurrentPosition(
+      pos => applyLocation(pos.coords),
+      err => alert("❌ Location error: " + err.message)
+    );
+  }
+
+  autoToggle.addEventListener('change', () => {
+    if (autoToggle.checked) getGeolocation();
+  });
+
+  useLocationBtn.addEventListener('click', getGeolocation);
+})();
 
 
   // Store registration
