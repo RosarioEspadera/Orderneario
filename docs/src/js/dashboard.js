@@ -14,16 +14,44 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   }
 
   const userId = userData.user.id;
+const autoToggle = document.getElementById('autoLocationToggle');
+const useLocationBtn = document.getElementById('useLocationBtn');
+const locationDisplay = document.getElementById('locationDisplay');
+
+function applyLocation(coords) {
+  document.querySelector('[name=lat]').value = coords.latitude;
+  document.querySelector('[name=lng]').value = coords.longitude;
+  locationDisplay.textContent = `Coordinates: ${coords.latitude.toFixed(5)}, ${coords.longitude.toFixed(5)}`;
+}
+
+function getGeolocation() {
+  navigator.geolocation.getCurrentPosition(
+    (pos) => applyLocation(pos.coords),
+    (err) => alert("Location error: " + err.message)
+  );
+}
+
+autoToggle.addEventListener('change', () => {
+  if (autoToggle.checked) getGeolocation();
+});
+
+useLocationBtn.addEventListener('click', () => getGeolocation());
+
 
   // Store registration
   document.getElementById('storeForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const form = new FormData(e.target);
     const { name, address, lat, lng } = Object.fromEntries(form.entries());
-
+  
     const { error } = await supabase.from('stores').insert([{
-      name, address, lat: parseFloat(lat), lng: parseFloat(lng), owner_id: userId
+    name,
+    address,
+    lat: parseFloat(lat),
+    lng: parseFloat(lng),
+    owner_id: userId
     }]);
+
 
     if (error) alert("❌ Store insert failed: " + error.message);
     else alert("✅ Store registered!");
