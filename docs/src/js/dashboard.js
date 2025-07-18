@@ -124,6 +124,4 @@ if (insertError) {
 } else {
   alert("✅ Dish uploaded!");
 }
-
-  });
-})();
+});
