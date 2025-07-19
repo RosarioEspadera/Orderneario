@@ -30,13 +30,18 @@ document.getElementById('signInForm')?.addEventListener('submit', async (e) => {
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) return alert("❌ Sign-in failed: " + error.message);
 
-  // 🔐 Optionally set metadata (if needed post-login)
-  await supabase.auth.updateUser({
-    data: { role } // Save as user_metadata
-  });
+ // 🧠 Fetch role from JWT
+const { data: userData } = await supabase.auth.getUser();
+const user = userData.user;
+const role = user.user_metadata?.role || 'consumer';
 
   alert(`✅ Signed in as ${role}`);
+  // 🔄 Redirect based on role
+if (role === 'store_owner') {
   location.href = 'dashboard.html';
+} else {
+  location.href = 'homepage.html';
+}
 });
 
 
