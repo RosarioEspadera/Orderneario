@@ -22,5 +22,21 @@ document.getElementById('loginBtn').addEventListener('click', async () => {
     document.getElementById('statusMsg').textContent = `❌ Login error: ${error.message}`;
   }
 });
+document.getElementById('signInForm')?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const form = new FormData(e.target);
+  const { email, password, role } = Object.fromEntries(form.entries());
+
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  if (error) return alert("❌ Sign-in failed: " + error.message);
+
+  // 🔐 Optionally set metadata (if needed post-login)
+  await supabase.auth.updateUser({
+    data: { role } // Save as user_metadata
+  });
+
+  alert(`✅ Signed in as ${role}`);
+  location.href = 'dashboard.html';
+});
 
 
