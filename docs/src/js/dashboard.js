@@ -133,6 +133,7 @@ document.getElementById('uploadForm')?.addEventListener('submit', async (e) => {
   if (insertError) alert("❌ Dish insert failed: " + insertError.message);
   else alert("✅ Dish uploaded!");
 });
+console.log("📸 Uploaded image key:", uploadData?.path);
 
 // 📍 Map rendering
 function addStoreToMap(store) {
