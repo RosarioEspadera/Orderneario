@@ -1,5 +1,25 @@
 import { supabase } from './supabaseClient.js';
 
+document.getElementById('signUpBtn')?.addEventListener('click', async () => {
+  const email = prompt("Enter your email:");
+  const password = prompt("Create a password (min 6 chars):");
+
+  const { error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      redirectTo: 'https://rosarioespadera.github.io/Orderneario/profile.html'
+    }
+  });
+
+  if (error) {
+    alert("❌ Sign-up failed: " + error.message);
+  } else {
+    alert("✅ Sign-up email sent! Please check your inbox to confirm.");
+  }
+});
+
+
 const roleSelect = document.getElementById('roleSelect');
 
 // 🔐 Email/password login
