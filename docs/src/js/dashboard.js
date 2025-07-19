@@ -110,16 +110,19 @@ document.getElementById('uploadForm')?.addEventListener('submit', async (e) => {
 
   if (!file || !file.name) return alert("❌ No image selected.");
 
-  const safeName = encodeURIComponent(file.name.replace(/[^\w.-]/g, '_'));
+  const safeName = file.name.replace(/[^\w.-]/g, '_');
   const filePath = `public/${Date.now()}-${safeName}`;
 
   const { error: uploadError } = await supabase.storage
     .from('dish-images')
     .upload(filePath, file, { upsert: true });
+  
+  console.log("📸 Uploaded image key:", uploadData?.path);
+
 
   if (uploadError) return alert("❌ Upload failed: " + uploadError.message);
 
-  const imageUrl = `https://neigxicrhalonnsaqkud.supabase.co/storage/v1/object/public/dish-images/${filePath}`;
+  const imageUrl = `${SUPABASE_URL}/storage/v1/object/public/dish-images/${uploadData.path}`;
 
   const { error: insertError } = await supabase.from('foods').insert([{
     name: form.get('name'),
@@ -133,7 +136,6 @@ document.getElementById('uploadForm')?.addEventListener('submit', async (e) => {
   if (insertError) alert("❌ Dish insert failed: " + insertError.message);
   else alert("✅ Dish uploaded!");
 });
-console.log("📸 Uploaded image key:", uploadData?.path);
 
 // 📍 Map rendering
 function addStoreToMap(store) {
