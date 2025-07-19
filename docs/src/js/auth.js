@@ -1,23 +1,27 @@
 import { supabase } from './supabaseClient.js';
 
-document.getElementById('signUpBtn')?.addEventListener('click', async () => {
-  const email = prompt("Enter your email:");
-  const password = prompt("Create a password (min 6 chars):");
+document.getElementById('signUpForm')?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const form = new FormData(e.target);
+  const { email, password, role } = Object.fromEntries(form.entries());
 
   const { error } = await supabase.auth.signUp({
     email,
     password,
     options: {
-      redirectTo: 'https://rosarioespadera.github.io/Orderneario/profile.html'
+      data: { role }, // ✅ Use selected role
+      redirectTo: 'https://rosarioespadera.github.io/Orderneario/homepage.html'
     }
   });
 
+  const msg = document.getElementById('signUpMsg');
   if (error) {
-    alert("❌ Sign-up failed: " + error.message);
+    msg.textContent = `❌ Sign-up failed: ${error.message}`;
   } else {
-    alert("✅ Sign-up email sent! Please check your inbox to confirm.");
+    msg.textContent = `✅ Confirmation sent! Check your inbox to activate your account.`;
   }
 });
+
 
 
 const roleSelect = document.getElementById('roleSelect');
