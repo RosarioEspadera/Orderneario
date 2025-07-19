@@ -1,67 +1,131 @@
 @media (forced-colors: active) {
   /* updated styles for modern high contrast mode */
 }
-/* 📍 Location Controls Styling */
-#useLocationBtn {
-  padding: 8px 12px;
-  font-size: 0.95rem;
-  border: none;
-  border-radius: 6px;
-  background-color: #2e7d32;
-  color: #fff;
-  cursor: pointer;
-  margin-top: 6px;
-  transition: background-color 0.3s ease;
-}
-
-#useLocationBtn:hover {
-  background-color: #1b5e20;
-}
-
-#autoLocationToggle {
-  margin-right: 6px;
-  accent-color: #2e7d32;
-}
-
-label[for="autoLocationToggle"],
-#locationDisplay {
-  font-size: 0.9rem;
+/* 🌐 Reset + Base */
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Segoe UI', sans-serif;
+  background: #f9f9f9;
   color: #333;
-  margin-top: 10px;
-  display: block;
 }
 
-#locationDisplay {
-  margin-top: 8px;
-  font-weight: 500;
-  background: #e8f5e9;
-  border-left: 4px solid #66bb6a;
-  padding: 4px 8px;
-  border-radius: 4px;
-}
-/* 🧭 Tab Navigation */
+/* 🔝 Navigation Tabs */
 .tab-nav {
   display: flex;
   justify-content: center;
   gap: 20px;
-  background-color: #f3f3f3;
-  padding: 10px 0;
-  border-bottom: 1px solid #ccc;
-  font-family: sans-serif;
+  background: #e0e0e0;
+  padding: 12px 0;
+  border-bottom: 2px solid #ccc;
 }
 
 .tab-nav a {
   text-decoration: none;
+  font-weight: bold;
   padding: 8px 16px;
   border-radius: 6px;
-  background-color: #e0e0e0;
   color: #333;
-  font-weight: 600;
-  transition: background-color 0.3s ease;
+  background: #d6d6d6;
+  transition: background 0.3s ease;
 }
 
 .tab-nav a:hover {
-  background-color: #d1c4e9;
-  color: #000;
+  background: #9fa8da;
+  color: #fff;
 }
 
+/* 🧑‍🍳 Panel Headers */
+h2 {
+  color: #3f51b5;
+  margin-bottom: 10px;
+}
+
+/* 🔒 Auth Status */
+#authStatus {
+  margin: 10px;
+  font-size: 14px;
+  color: #4caf50;
+}
+
+/* 📁 Forms */
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: #ffffff;
+  padding: 16px;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.06);
+  max-width: 400px;
+  margin: auto;
+}
+
+input, textarea, select, button {
+  padding: 10px;
+  font-size: 15px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+button {
+  background: #3f51b5;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #303f9f;
+}
+
+/* 🧑‍💼 Profile Panel */
+#profileImage {
+  border-radius: 50%;
+  margin: 10px 0;
+}
+
+#profileRole {
+  font-style: italic;
+  color: #616161;
+}
+
+/* 🗺️ Map Container */
+#map {
+  height: 500px;
+  margin: 20px auto;
+  max-width: 90%;
+  border: 2px solid #ccc;
+  border-radius: 8px;
+}
+
+/* 🍽️ Menu Panel (map view) */
+#menuPanel {
+  background: #fff;
+  border-radius: 8px;
+  padding: 10px;
+  margin: 15px auto;
+  max-width: 500px;
+  box-shadow: 0 0 8px rgba(0,0,0,0.1);
+}
+
+#menuList li {
+  list-style: none;
+  margin: 10px 0;
+}
+
+#menuList img {
+  border-radius: 6px;
+  max-width: 100px;
+  margin-right: 10px;
+}
+
+/* 🚪 Logout button */
+#logoutBtn {
+  margin-top: 10px;
+  background: #ef5350;
+}
+
+#logoutBtn:hover {
+  background: #d32f2f;
+}
