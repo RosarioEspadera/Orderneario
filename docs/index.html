@@ -21,11 +21,20 @@
 
     <button id="loginBtn">🔐 Sign in with Google</button>
     <!-- 🔐 Role Selection -->
-      <label for="roleSelect">Choose your role:</label>
-      <select id="roleSelect">
-        <option value="consumer">🛍️ Consumer</option>
-        <option value="store_owner">👩‍🍳 Store Owner</option>
-      </select>
+     <h2>🔐 Sign In</h2>
+<form id="signInForm">
+  <input type="email" name="email" placeholder="Email" required />
+  <input type="password" name="password" placeholder="Password" required />
+
+  <label for="role">Login as:</label>
+  <select name="role" required>
+    <option value="consumer">Consumer</option>
+    <option value="store_owner">Store Owner</option>
+  </select>
+
+  <button type="submit">Sign In</button>
+</form>
+
     <div style="margin-top: 20px;">
       <section id="nearbyStores">
       <h2>🛍️ Nearby Stores</h2>
