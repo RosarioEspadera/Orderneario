@@ -198,6 +198,7 @@ window.viewMenu = async (storeId, storeName) => {
 // ✏️ Dish Edit Function
 // ✏️ Open modal and populate form
 window.editDish = async (dishId) => {
+  console.log("🔧 Opening edit modal for dish:", dishId);
   const { data, error } = await supabase.from('foods').select('*').eq('id', dishId).single();
   if (error) return alert("❌ Failed to fetch dish");
 
