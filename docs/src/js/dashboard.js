@@ -186,28 +186,49 @@ function haversine(lat1, lon1, lat2, lon2) {
 }
 const toRad = deg => deg * Math.PI / 180;
 
-// 🍱 View menu per store
+// 🧑‍🍳 View Menu Per Store
 window.viewMenu = async (storeId, storeName) => {
-  const { data: menu, error } = await supabase.from('foods').select('*').eq('store_id', storeId);
-  if (error) return alert("❌ Failed to load menu");
+  // 🔐 Get current user and role
+  const { data: userData } = await supabase.auth.getUser();
+  const userRole = userData?.user?.user_metadata?.role || 'guest';
 
+  console.log('Viewing menu for store:', storeName, 'as', userRole);
+
+  // 🥘 Fetch menu items
+  const { data: menu, error } = await supabase
+    .from('foods')
+    .select('*')
+    .eq('store_id', storeId);
+
+  if (error) return alert('❌ Failed to load menu');
+  if (!menu || menu.length === 0) {
+    return alert(`ℹ️ No dishes yet for ${storeName}`);
+  }
+
+  // 🎨 Prepare UI
   const panel = document.getElementById('menuPanel');
   panel.style.display = 'block';
   document.getElementById('menuTitle').textContent = `🍽️ ${storeName}'s Menu`;
   const list = document.getElementById('menuList');
   list.innerHTML = '';
-  
+
+  // 📦 Render dishes
   menu.forEach(item => {
     const li = document.createElement('li');
-    const isOwner = userRole === 'store_owner';
     li.innerHTML = `
       <img src="${item.image_url}" width="100" />
-      <p><strong>${item.name}</strong> – ₱${item.price}<br>${item.description}</p>
-      ${isOwner ? `<button onclick="editDish('${item.id}')">✏️ Edit</button>` : ''}
+      <p>
+        <strong>${item.name}</strong> – ₱${item.price}<br>
+        ${item.description}
+      </p>
+      ${userRole === 'store_owner' ? `
+        <button onclick="editDish('${item.id}')">✏️ Edit</button>
+      ` : ''}
     `;
     list.appendChild(li);
   });
 };
+
 
 // ✏️ Dish Edit Function
 // ✏️ Open modal and populate form
