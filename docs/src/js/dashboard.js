@@ -12,12 +12,18 @@ let storeMarkers = {};
 
 (async () => {
   // 🔐 Auth check
-  const { data: userData, error } = await supabase.auth.getUser();
-  if (error || !userData?.user) return alert("You're not signed in.");
+ const { data: userData, error } = await supabase.auth.getUser();
+if (error || !userData?.user) {
+  alert("You're not signed in.");
+  return;
+}
 
-  userId = userData.user.id;
-  userRole = userData.user.user_metadata?.role || 'consumer';
-  console.log("👤 Role from JWT:", userRole);
+const user = userData.user;
+userId = user.id;
+userRole = user.user_metadata?.role || 'consumer';
+
+console.log("👤 Role from JWT:", userRole);
+
 
   // 🧭 Tab nav & panel visibility
   document.querySelector('.tab-nav').innerHTML =
