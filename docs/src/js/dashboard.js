@@ -106,23 +106,29 @@ document.getElementById('storeForm')?.addEventListener('submit', async (e) => {
 document.getElementById('uploadForm')?.addEventListener('submit', async (e) => {
   e.preventDefault();
   const form = new FormData(e.target);
-  const file = form.get('image');
+ const file = form.get('image');
+if (!file || !file.name || !file.type.startsWith('image/')) {
+  alert("❌ Invalid or missing image file");
+  return;
+}
 
-  if (!file || !file.name) return alert("❌ No image selected.");
+const safeName = file.name.replace(/[^\w.-]/g, '_'); // Avoid encodeURIComponent
+const filePath = `public/${Date.now()}-${safeName}`;
 
-  const safeName = file.name.replace(/[^\w.-]/g, '_');
-  const filePath = `public/${Date.now()}-${safeName}`;
+// Actual upload
+const { data: uploadData, error: uploadError } = await supabase.storage
+  .from('dish-images')
+  .upload(filePath, file, { upsert: true });
 
-  const { error: uploadError } = await supabase.storage
-    .from('dish-images')
-    .upload(filePath, file, { upsert: true });
-  
-  console.log("📸 Uploaded image key:", uploadData?.path);
+if (uploadError) {
+  console.error("❌ Upload failed:", uploadError.message);
+  alert("Image upload failed.");
+  return;
+}
 
+console.log("📸 Uploaded image key:", uploadData?.path);
+const imageUrl = `https://neigxicrhalonnsaqkud.supabase.co/storage/v1/object/public/dish-images/${uploadData?.path}`;
 
-  if (uploadError) return alert("❌ Upload failed: " + uploadError.message);
-
-  const imageUrl = `${SUPABASE_URL}/storage/v1/object/public/dish-images/${uploadData.path}`;
 
   const { error: insertError } = await supabase.from('foods').insert([{
     name: form.get('name'),
