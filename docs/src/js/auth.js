@@ -10,7 +10,7 @@ document.getElementById('signUpForm')?.addEventListener('submit', async (e) => {
     password,
     options: {
       data: { role }, // ✅ Use selected role
-      redirectTo: 'https://rosarioespadera.github.io/Orderneario/profile.html'
+      redirectTo: 'https://rosarioespadera.github.io/Orderneario/index.html'
     }
   });
 
