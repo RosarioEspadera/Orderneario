@@ -1,4 +1,4 @@
-import { supabase } from './supabaseClient.js';
+import { supabase, SUPABASE_URL } from './supabaseClient.js';
 
 let userId, userRole, map;
 let storeMarkers = {};
