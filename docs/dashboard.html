@@ -21,7 +21,9 @@
   </header>
 
   <main>
+    <div id="storeUploadPanel" style="display: none;">
     <section>
+      
       <h2>🏪 Register Store</h2>
       <form id="storeForm">
         <input type="text" name="name" placeholder="Store Name" required />
@@ -39,7 +41,8 @@
       </form>
       
     </section>
-
+  
+    
     <section>
       <h2>🍽️ Upload Dish</h2>
       <form id="uploadForm">
@@ -50,6 +53,9 @@
         <button type="submit">Upload Dish</button>
       </form>
     </section>
+    </div>
+    <div id="mapLinkOnly" style="display: none;">
+  <p>🛍️ You're a consumer — browse the map to see stores near you.</p>
     <!-- 🗺️ Map Section -->
 <div id="map" style="height: 400px; margin: 20px auto;"></div>
 
@@ -58,7 +64,7 @@
   <h2 id="menuTitle">🍽️ Menu</h2>
   <ul id="menuList"></ul>
 </div>
-
+    </div>
   </main>
 
   <script type="module" src="src/js/dashboard.js"></script>
