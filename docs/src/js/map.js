@@ -14,13 +14,11 @@ const menuPanelEl = document.getElementById('menuPanel');
 function addStoreMarker(store) {
   const marker = L.marker([store.lat, store.lng]).addTo(map);
 
-  marker.bindPopup(`
-    <strong>${store.name}</strong><br>
-    ${store.address}<br>
-    <button class="viewMenuBtn" data-id="${store.id}" data-name="${store.name}">
-      🍽️ View Menu
-    </button>
-  `);
+ marker.bindPopup(`
+  <strong>${store.name}</strong><br>
+  ${store.address}<br>
+  <button class="viewMenuBtn" data-id="${store.id}" data-name="${store.name}">🍽️ View Menu</button>
+`);
 }
 
 // 🚀 Load all stores
@@ -79,12 +77,11 @@ async function placeOrder(foodId) {
 
 // 🎯 Delegate button clicks
 document.addEventListener('click', (e) => {
-  if (e.target.matches('.viewMenuBtn')) {
+  if (e.target.classList.contains('viewMenuBtn')) {
     const storeId = e.target.dataset.id;
     const storeName = e.target.dataset.name;
     loadMenu(storeId, storeName);
   }
-
   if (e.target.matches('.orderBtn')) {
     const foodId = e.target.dataset.id;
     placeOrder(foodId);
