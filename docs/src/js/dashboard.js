@@ -196,5 +196,40 @@ window.viewMenu = async (storeId, storeName) => {
 };
 
 // ✏️ Dish Edit Function
+// ✏️ Open modal and populate form
 window.editDish = async (dishId) => {
-  const { data, error } = await supabase.from('foods').select('*').eq('id', dishId
+  const { data, error } = await supabase.from('foods').select('*').eq('id', dishId).single();
+  if (error) return alert("❌ Failed to fetch dish");
+
+  const form = document.getElementById('editDishForm');
+  form.dish_id.value = dishId;
+  form.name.value = data.name;
+  form.description.value = data.description;
+  form.price.value = data.price;
+
+  document.getElementById('editDishModal').style.display = 'block';
+};
+
+// 🛑 Close modal
+window.closeEditModal = () => {
+  document.getElementById('editDishModal').style.display = 'none';
+};
+
+// 💾 Handle save
+document.getElementById('editDishForm')?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const form = Object.fromEntries(new FormData(e.target));
+  const { dish_id, name, description, price } = form;
+
+  const { error } = await supabase
+    .from('foods')
+    .update({ name, description, price: parseFloat(price) })
+    .eq('id', dish_id);
+
+  if (error) return alert("❌ Update failed: " + error.message);
+
+  alert("✅ Dish updated!");
+  closeEditModal();
+  window.location.reload(); // or re-call viewMenu if you prefer
+});
+
