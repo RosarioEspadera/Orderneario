@@ -50,7 +50,7 @@ document.getElementById('loginBtn')?.addEventListener('click', async () => {
   const { error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: 'https://rosarioespadera.github.io/Orderneario/homepage.html'
+      redirectTo: 'https://rosarioespadera.github.io/Orderneario/profile.html'
     }
   });
 
