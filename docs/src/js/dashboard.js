@@ -1,54 +1,46 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js';
 
 const SUPABASE_URL = 'https://neigxicrhalonnsaqkud.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5laWd4aWNyaGFsb25uc2Fxa3VkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI4NDQ3NjcsImV4cCI6MjA2ODQyMDc2N30.43DDOz-38NSc0nUejfTGOMD4xYBfzNvy4n0NFZWEfeo'; // Replace with env variable if possible
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5laWd4aWNyaGFsb25uc2Fxa3VkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI4NDQ3NjcsImV4cCI6MjA2ODQyMDc2N30.43DDOz-38NSc0nUejfTGOMD4xYBfzNvy4n0NFZWEfeo'; // Replace with secure env later
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// 🌍 Global state
 let userId, userRole, map;
-let storeMarkers = {};
+let storeMarkers = {}, editDishModalVisible = false;
 
+// 🔐 Auth and Session Setup
 (async () => {
-  const { user } = await fetchUser();
+  const { data, error } = await supabase.auth.getUser();
+  if (error || !data?.user) return alert("You're not signed in.");
+  const user = data.user;
   userId = user.id;
   userRole = user.user_metadata?.role || 'consumer';
 
-  setupNavbar(userRole);
+  setupNavbar();
+  setupLocationControls();
   initMap();
-  userRole === 'consumer' ? await locateAndFilter() : await loadAllStores();
-  setupStoreSync();
-  setupLocationButtons();
+  userRole === 'consumer' ? await locateNearby() : await loadAllStores();
+  watchStoreSync();
 })();
 
-// 🔐 Fetch user with fallback
-async function fetchUser() {
-  const { data, error } = await supabase.auth.getUser();
-  if (error || !data?.user) {
-    alert("You're not signed in.");
-    throw error;
-  }
-  return { user: data.user };
+// 🧭 Navbar Builder
+function setupNavbar() {
+  document.querySelector('.tab-nav').innerHTML =
+    userRole === 'store_owner'
+      ? `<a href="dashboard.html">📋 Dashboard</a><a href="map.html">🗺️ Map</a><a href="profile.html">👤 Profile</a>`
+      : `<a href="map.html">🗺️ Map</a><a href="profile.html">👤 Profile</a>`;
+
+  const panel = document.getElementById(userRole === 'store_owner' ? 'storeUploadPanel' : 'mapLinkOnly');
+  if (panel) panel.style.display = 'block';
 }
 
-// 🧭 Setup nav & dashboard panels
-function setupNavbar(role) {
-  document.querySelector('.tab-nav').innerHTML = role === 'store_owner'
-    ? `<a href="dashboard.html">📋 Dashboard</a><a href="map.html">🗺️ Map</a><a href="profile.html">👤 Profile</a>`
-    : `<a href="map.html">🗺️ Map</a><a href="profile.html">👤 Profile</a>`;
-
-  const panelId = role === 'store_owner' ? 'storeUploadPanel' : 'mapLinkOnly';
-  const rolePanel = document.getElementById(panelId);
-  if (rolePanel) rolePanel.style.display = 'block';
-}
-
-// 🗺️ Map setup
+// 🗺️ Leaflet Setup
 function initMap() {
   map = L.map('map').setView([7.032, 125.092], 13);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 }
 
-// 🧭 Locate consumer
-async function locateAndFilter() {
+// 📍 Auto Geolocation
+async function locateNearby() {
   navigator.geolocation.getCurrentPosition(
     async pos => {
       const { latitude, longitude } = pos.coords;
@@ -59,44 +51,41 @@ async function locateAndFilter() {
   );
 }
 
-// 🔁 Store sync
-function setupStoreSync() {
-  supabase.channel('realtime-store-sync')
-    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'stores' },
-      payload => {
-        console.log("⚡ New store detected:", payload.new);
-        addStoreToMap(payload.new);
-      }
-    ).subscribe();
+// 🔁 Real-Time Sync for Stores
+function watchStoreSync() {
+  supabase.channel('store-sync')
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'stores' }, ({ new: store }) => {
+      console.log("⚡ New store:", store.name);
+      addStoreToMap(store);
+    }).subscribe();
 }
 
-// 📍 Location selector
-function setupLocationButtons() {
-  const locationDisplay = document.getElementById('locationDisplay');
+// 📍 Location Controls
+function setupLocationControls() {
   const autoToggle = document.getElementById('autoLocationToggle');
+  const locationDisplay = document.getElementById('locationDisplay');
   const useLocationBtn = document.getElementById('useLocationBtn');
-
-  function applyLocation(coords) {
-    document.querySelector('[name=lat]').value = coords.latitude;
-    document.querySelector('[name=lng]').value = coords.longitude;
-    locationDisplay.textContent = `📍 ${coords.latitude.toFixed(5)}, ${coords.longitude.toFixed(5)}`;
-  }
-
-  function getGeolocation() {
-    navigator.geolocation.getCurrentPosition(
-      pos => applyLocation(pos.coords),
-      err => alert("❌ Location error: " + err.message)
-    );
-  }
 
   autoToggle?.addEventListener('change', () => {
     if (autoToggle.checked) getGeolocation();
   });
 
   useLocationBtn?.addEventListener('click', getGeolocation);
+
+  function getGeolocation() {
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        const { latitude, longitude } = pos.coords;
+        document.querySelector('[name=lat]').value = latitude;
+        document.querySelector('[name=lng]').value = longitude;
+        locationDisplay.textContent = `📍 ${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
+      },
+      err => alert("❌ Location error: " + err.message)
+    );
+  }
 }
 
-// 🏪 Register store
+// 🏪 Register New Store
 document.getElementById('storeForm')?.addEventListener('submit', async (e) => {
   e.preventDefault();
   const form = Object.fromEntries(new FormData(e.target));
@@ -115,14 +104,13 @@ document.getElementById('storeForm')?.addEventListener('submit', async (e) => {
   addStoreToMap(data[0]);
 });
 
-// 🍽️ Upload dish
+// 🍽️ Upload New Dish
 document.getElementById('uploadForm')?.addEventListener('submit', async (e) => {
   e.preventDefault();
   const form = new FormData(e.target);
   const image = form.get('image');
   if (!image || !image.name || !image.type.startsWith('image/')) {
-    alert("❌ Invalid or missing image");
-    return;
+    alert("❌ Invalid image file"); return;
   }
 
   const safeName = image.name.replace(/[^\w.-]/g, '_');
@@ -131,14 +119,10 @@ document.getElementById('uploadForm')?.addEventListener('submit', async (e) => {
     .from('dish-images')
     .upload(filePath, image, { upsert: true });
 
-  if (uploadError) {
-    console.error("❌ Upload failed:", uploadError.message);
-    alert("Image upload failed.");
-    return;
-  }
+  if (uploadError) return alert("❌ Image upload failed: " + uploadError.message);
 
   const imageUrl = `${SUPABASE_URL}/storage/v1/object/public/dish-images/${uploadData.path}`;
-  const selectedStoreId = form.get('store_id'); // Add a store dropdown in the form
+  const store_id = form.get('store_id');
 
   const { error: insertError } = await supabase.from('foods').insert([{
     name: form.get('name'),
@@ -146,14 +130,14 @@ document.getElementById('uploadForm')?.addEventListener('submit', async (e) => {
     price: parseFloat(form.get('price')),
     image_url: imageUrl,
     uploader_id: userId,
-    store_id: selectedStoreId
+    store_id
   }]);
 
   if (insertError) alert("❌ Dish insert failed: " + insertError.message);
   else alert("✅ Dish uploaded!");
 });
 
-// 📍 Add store marker
+// 📍 Render Store Marker
 function addStoreToMap(store) {
   if (storeMarkers[store.id]) return;
   const marker = L.marker([store.lat, store.lng]).addTo(map);
@@ -164,34 +148,32 @@ function addStoreToMap(store) {
   storeMarkers[store.id] = marker;
 }
 
-// 🧭 Nearby store filtering
-async function loadNearbyStores(userLat, userLng) {
+// 🧭 Nearby Filtering
+async function loadNearbyStores(lat1, lon1) {
   const { data, error } = await supabase.from('stores').select('*');
   if (error) return alert("❌ Failed to load stores");
+
   data.forEach(store => {
-    const d = haversine(userLat, userLng, store.lat, store.lng);
+    const d = haversine(lat1, lon1, store.lat, store.lng);
     if (d <= 5) addStoreToMap(store);
   });
 }
-
 async function loadAllStores() {
   const { data, error } = await supabase.from('stores').select('*');
   if (error) return alert("❌ Failed to load stores");
   data.forEach(addStoreToMap);
 }
-
 function haversine(lat1, lon1, lat2, lon2) {
   const R = 6371, dLat = toRad(lat2 - lat1), dLon = toRad(lon2 - lon1);
-  const a = Math.sin(dLat/2)**2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon/2)**2;
+  const a = Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 const toRad = deg => deg * Math.PI / 180;
 
-// 🍱 Load store menu
+// 🍱 Load Menu + Edit Button
 window.viewMenu = async (storeId, storeName) => {
-  const { data, error } = await supabase.from('foods')
-    .select('*').eq('store_id', storeId);
-
+  const { data: menu, error } = await supabase.from('foods').select('*').eq('store_id', storeId);
   if (error) return alert("❌ Failed to load menu");
 
   const panel = document.getElementById('menuPanel');
@@ -200,12 +182,19 @@ window.viewMenu = async (storeId, storeName) => {
 
   const list = document.getElementById('menuList');
   list.innerHTML = '';
-  data.forEach(item => {
+
+  menu.forEach(item => {
     const li = document.createElement('li');
+    const isOwner = userRole === 'store_owner';
     li.innerHTML = `
       <img src="${item.image_url}" width="100" />
       <p><strong>${item.name}</strong> – ₱${item.price}<br>${item.description}</p>
+      ${isOwner ? `<button onclick="editDish('${item.id}')">✏️ Edit</button>` : ''}
     `;
     list.appendChild(li);
   });
 };
+
+// ✏️ Dish Edit Function
+window.editDish = async (dishId) => {
+  const { data, error } = await supabase.from('foods').select('*').eq('id', dishId
