@@ -76,7 +76,6 @@ checkoutForm.addEventListener('submit', async (e) => {
     const buyerMessage = `🧾 Your order:\n\n${summary}\n\nTotal: ₱${total.toFixed(2)}\nDate: ${timestamp}\n📍 ${buyerAddress}\n🗺️ ${mapLink}`;
     await emailjs.send('service_epydqmi', 'template_6d3ltu9', {
       to_email: buyerEmail,
-      buyer_name: buyerName,
       message: buyerMessage
     });
 
