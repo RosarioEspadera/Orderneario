@@ -89,17 +89,22 @@ window.placeOrder = async (foodId) => {
     if (!currentUser) return alert('🔒 Please sign in first.');
   }
 
-  // ✅ Insert into orders
-  const { error } = await supabase.from('orders').insert([{
+  const newOrder = {
     user_id: currentUser.id,
-    food_id: foodId,
+    food_id,
     status: 'pending',
     timestamp: new Date().toISOString()
-  }]);
+  };
+
+  console.log("🚀 Order payload:", newOrder); // ✅ Log before the insert
+
+  const { error } = await supabase.from('orders').insert([newOrder]);
 
   if (error) return alert(`❌ Order failed: ${error.message}`);
   alert('✅ Dish added to your order! Check out 🧾 Checkout page to confirm.');
-};
+  document.querySelector(`[data-id="${foodId}"]`)?.setAttribute('disabled', true);
+}; // ← ✅ This closing brace was missing
+
 
 // 🎯 Event Delegation
 document.addEventListener('click', async (e) => {
