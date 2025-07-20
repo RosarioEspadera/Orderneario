@@ -64,11 +64,17 @@ const supabase = createClient(
     });
 
     // 📬 Lookup Store Owners
-    const { data: sellerOrders } = await supabase
-      .from('orders')
-      .select('foods(name, store_id), foods.stores(email)')
-      .eq('user_id', currentUser.id)
-      .eq('status', 'pending');
+   const { data: sellerOrders, error } = await supabase
+  .from('orders')
+  .select('foods(name, store_id, stores(email))') // ✅ Correct format
+  .eq('user_id', currentUser.id)
+  .eq('status', 'pending');
+
+if (error || !sellerOrders) {
+  console.error('❌ Seller lookup failed:', error?.message);
+  return;
+}
+
 
     // 🗂️ Group Dishes by Store Email
     const grouped = new Map();
