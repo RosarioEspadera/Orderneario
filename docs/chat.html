@@ -26,14 +26,11 @@
   <script type="module">
     import { createClient } from 'https://esm.sh/@supabase/supabase-js';
 
-    const supabase = createClient(
-      'https://neigxicrhalonnsaqkud.supabase.co',
-      'your-anon-key' // Replace this with your actual anon key
-    );
-
+    const supabase = createClient('https://neigxicrhalonnsaqkud.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5laWd4aWNyaGFsb25uc2Fxa3VkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI4NDQ3NjcsImV4cCI6MjA2ODQyMDc2N30.43DDOz-38NSc0nUejfTGOMD4xYBfzNvy4n0NFZWEfeo'); // 🔐 Replace with actual anon key
     const feedList = document.getElementById('feedList');
     const roleInfo = document.getElementById('roleInfo');
 
+    // 👤 Get current user and role
     const { data: authData } = await supabase.auth.getUser();
     const currentUser = authData?.user;
     if (!currentUser) {
@@ -41,10 +38,9 @@
       return;
     }
 
-    // 🔎 Get user role
     const { data: profile } = await supabase
       .from('profiles')
-      .select('role, name')
+      .select('role')
       .eq('id', currentUser.id)
       .single();
 
@@ -52,16 +48,16 @@
     roleInfo.textContent = `Signed in as ${currentUser.email} (${role})`;
 
     if (role === 'consumer') {
-      // 🛒 Show user's orders
+      // 🛒 Show recent orders for the consumer
       const { data: orders } = await supabase
         .from('orders')
         .select('timestamp, status, foods(name)')
         .eq('user_id', currentUser.id)
         .order('timestamp', { ascending: false });
 
-      orders.forEach(order => {
+      orders?.forEach(order => {
         const time = new Date(order.timestamp).toLocaleTimeString();
-        const msg = `🧾 You ordered ${order.foods.name} — ${order.status} at ${time}`;
+        const msg = `🧾 You ordered ${order.foods.name} — ${order.status} @ ${time}`;
         const li = document.createElement('li');
         li.textContent = msg;
         feedList.appendChild(li);
@@ -69,42 +65,51 @@
     }
 
     if (role === 'store_owner') {
-      // 👨‍🍳 Listen for new orders
+      // 👨‍🍳 Subscribe to new orders
       supabase
-        .channel('store_alerts')
+        .channel('order-alerts')
         .on('postgres_changes', {
           event: 'INSERT',
           schema: 'public',
           table: 'orders'
         }, async ({ new: order }) => {
-          // Get the dish and its store
-          const { data: foodData } = await supabase
+          // Step 1: Get the dish
+          const { data: dish } = await supabase
             .from('foods')
-            .select('name, store_id, stores(owner_id)')
+            .select('name, store_id')
             .eq('id', order.food_id)
             .single();
 
-          // Only alert if dish belongs to this owner
-          if (foodData?.stores?.owner_id !== currentUser.id) return;
+          if (!dish) return;
 
-          // Get buyer profile (name, address)
-          const { data: buyerProfile } = await supabase
+          // Step 2: Get the store info
+          const { data: store } = await supabase
+            .from('stores')
+            .select('owner_id')
+            .eq('id', dish.store_id)
+            .single();
+
+          if (!store || store.owner_id !== currentUser.id) return;
+
+          // Step 3: Get buyer info
+          const { data: buyer } = await supabase
             .from('profiles')
             .select('name, email, address')
             .eq('id', order.user_id)
             .single();
 
-          const buyerName = buyerProfile?.name ?? 'Unnamed';
-          const buyerEmail = buyerProfile?.email;
-          const buyerAddress = buyerProfile?.address ?? 'No address provided';
+          const buyerName = buyer?.name ?? 'Unnamed';
+          const buyerEmail = buyer?.email ?? 'No email';
+          const buyerAddress = buyer?.address ?? 'No address provided';
           const time = new Date(order.timestamp).toLocaleTimeString();
 
-          const msg = `📦 ${foodData.name} was ordered by ${buyerName} (${buyerEmail})\n📍 ${buyerAddress} @ ${time}`;
+          const msg = `📦 ${dish.name} was ordered by ${buyerName} (${buyerEmail})\n📍 ${buyerAddress} @ ${time}`;
           const li = document.createElement('li');
           li.textContent = msg;
           feedList.prepend(li);
 
-          new Audio('/assets/ding.mp3').play(); // optional alert sound
+          // 🔔 Optional sound
+          new Audio('/assets/ding.mp3').play(); // Add ding.mp3 to your assets folder
         })
         .subscribe();
     }
