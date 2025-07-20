@@ -1,5 +1,6 @@
 // src/js/dashboard.js
 import { supabase, SUPABASE_URL } from './supabaseClient.js';
+window.supabaseDev = supabase;
 
 let userId, userRole, map;
 let userStoreId = null;
