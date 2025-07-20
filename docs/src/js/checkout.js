@@ -8,6 +8,7 @@ const supabase = createClient(
   'https://neigxicrhalonnsaqkud.supabase.co',
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5laWd4aWNyaGFsb25uc2Fxa3VkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI4NDQ3NjcsImV4cCI6MjA2ODQyMDc2N30.43DDOz-38NSc0nUejfTGOMD4xYBfzNvy4n0NFZWEfeo' // Replace with your real anon key
 );
+
 // ⚙️ Main flow wrapped in async IIFE
 (async () => {
   const { data: authData } = await supabase.auth.getUser();
@@ -17,7 +18,7 @@ const supabase = createClient(
     return;
   }
 
-  // 🧩 DOM
+  // DOM Elements
   const orderList = document.getElementById('orderList');
   const totalEl = document.getElementById('totalAmount');
   const checkoutForm = document.getElementById('checkoutForm');
@@ -26,15 +27,15 @@ const supabase = createClient(
   const userAddressInput = document.getElementById('userAddress');
   const orderSummary = [];
 
-  // 🧾 Fetch orders
+  // Load orders
   const { data: orders, error } = await supabase
     .from('orders')
     .select('id, status, foods(name, price)')
     .eq('user_id', currentUser.id)
     .eq('status', 'pending');
 
-  if (error) {
-    console.error('❌ Order fetch error:', error.message);
+  if (error || !orders) {
+    console.error('❌ Order fetch error:', error?.message);
     return;
   }
 
@@ -52,54 +53,64 @@ const supabase = createClient(
   const summary = orderSummary.join('\n');
   const timestamp = new Date().toLocaleString();
 
-  // 💬 Submit handler
+  // Handle form submit
   checkoutForm.addEventListener('submit', async (e) => {
     e.preventDefault();
 
     const email = userEmailInput.value.trim();
     const name = userNameInput.value.trim();
     const address = userAddressInput.value.trim();
+    const mapLink = `https://www.google.com/maps/search/?q=${encodeURIComponent(address)}`;
 
-    // ✅ Buyer email payload
-    const buyerMessage = `✅ Your order:\n\n${summary}\n\nTotal: ₱${total}\nDate: ${timestamp}\n\nName: ${name || '—'}\nAddress: ${address || '—'}`;
+    // Send receipt to buyer
+    await emailjs.send('service_epydqmi', 'template_6d3ltu9', {
+      to_email: email,
+      buyer_name: name,
+      buyer_address: address,
+      order_summary: summary,
+      order_total: total.toFixed(2),
+      timestamp,
+      map_link: mapLink
+    });
 
-const mapLink = `https://www.google.com/maps/search/?q=${encodeURIComponent(address)}`;
-
-await emailjs.send('service_epydqmi', 'template_6d3ltu9', {
-  to_email: email,
-  buyer_name: name,
-  buyer_address: address,
-  order_summary: summary,
-  order_total: total.toFixed(2),
-  timestamp,
-  map_link: mapLink
-});
-
-
-
-    // 📬 Seller lookup
-    const { data: sellerOrders } = await supabase
+    // Manual seller lookup
+    const { data: pendingOrders } = await supabase
       .from('orders')
-      .select('foods(name, store_id), foods.stores(email)')
+      .select('food_id')
       .eq('user_id', currentUser.id)
       .eq('status', 'pending');
 
-    if (!sellerOrders || sellerOrders.length === 0) {
+    if (!pendingOrders || pendingOrders.length === 0) {
       console.error('❌ No seller orders found.');
       return;
     }
 
     const grouped = new Map();
-    sellerOrders.forEach(({ foods }) => {
-      const storeEmail = foods.stores?.email;
-      if (!storeEmail) return;
-      const line = `• ${foods.name}`;
+
+    for (const order of pendingOrders) {
+      const { data: food } = await supabase
+        .from('foods')
+        .select('name, store_id')
+        .eq('id', order.food_id)
+        .single();
+      if (!food) continue;
+
+      const { data: store } = await supabase
+        .from('stores')
+        .select('email')
+        .eq('id', food.store_id)
+        .single();
+      const storeEmail = store?.email;
+      if (!storeEmail) continue;
+
+      const line = `• ${food.name}`;
       if (!grouped.has(storeEmail)) grouped.set(storeEmail, []);
       grouped.get(storeEmail).push(line);
-    });
+    }
 
+    // Send receipt to each store owner
     for (const [storeEmail, dishes] of grouped.entries()) {
-      const sellerMessage = `📦 New order:\n\n${dishes.join('\n')}\n\nTotal: ₱${total}\nDate: ${timestamp}\nFrom: ${name || 'Unnamed'} (${email})\n📍 ${address || 'No address provided'}`;
+      const sellerMessage = `📦 New order:\n\n${dishes.join('\n')}\n\nTotal: ₱${total}\nDate: ${timestamp}\nFrom: ${name || 'Unnamed'} (${email})\n📍 ${address || 'No address provided'}\n🗺️ ${mapLink}`;
       await emailjs.send('service_epydqmi', 'template_6d3ltu9', {
         to_email: storeEmail,
         message: sellerMessage
@@ -108,7 +119,7 @@ await emailjs.send('service_epydqmi', 'template_6d3ltu9', {
 
     alert('✅ Receipts sent to buyer and store owner!');
 
-    // ✅ Confirm orders
+    // Mark orders as confirmed
     await supabase
       .from('orders')
       .update({ status: 'confirmed' })
