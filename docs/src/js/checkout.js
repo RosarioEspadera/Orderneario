@@ -40,27 +40,41 @@ let orderSummary = [];
 // 🧾 Send receipt via EmailJS
 checkoutForm.addEventListener('submit', async (e) => {
   e.preventDefault();
+
   const email = userEmailInput.value;
   const summary = orderSummary.join('\n');
   const total = totalEl.textContent;
+  const timestamp = new Date().toLocaleString();
 
- const templateParams = {
-  to_email: email,
-  order_summary: orderSummary.map(item => `<li>${item}</li>`).join(''),
-  total,
-  timestamp: new Date().toLocaleString(),
-};
+  // Send to buyer
+  const buyerParams = {
+    to_email: email,
+    message: `✅ Your order:\n\n${summary}\n\nTotal: ₱${total}\nDate: ${timestamp}`,
+  };
+  await emailjs.send('service_epydqmi', 'template_6d3ltu9', buyerParams);
 
+  // Lookup store owners
+  const { data: orders } = await supabase
+    .from('orders')
+    .select('foods(name, store_id), foods.stores(email)')
+    .eq('user_id', currentUser.id)
+    .eq('status', 'pending');
 
-  try {
-    await emailjs.send('service_epydqmi', 'template_6d3ltu9', templateParams);
-    alert('✅ Receipt sent to your email!');
-    await supabase
-      .from('orders')
-      .update({ status: 'confirmed' })
-      .eq('user_id', currentUser.id)
-      .eq('status', 'pending');
-  } catch (err) {
-    alert('❌ Failed to send email: ' + err.text);
+  const storeEmails = [...new Set(orders.map(o => o.foods.stores.email))]; // unique owners
+
+  // Send to each store owner
+  for (const storeEmail of storeEmails) {
+    const sellerParams = {
+      to_email: storeEmail,
+      message: `📦 New order placed!\n\n${summary}\n\nTotal: ₱${total}\nDate: ${timestamp}`,
+    };
+    await emailjs.send('service_epydqmi', 'template_6d3ltu9', sellerParams);
   }
+
+  alert('✅ Receipts sent to buyer and store owner!');
+  await supabase
+    .from('orders')
+    .update({ status: 'confirmed' })
+    .eq('user_id', currentUser.id)
+    .eq('status', 'pending');
 });
