@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>🔔 Store Alerts | Orderneario</title>
+  <title>💬 Live Orders | Orderneario</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -15,69 +15,99 @@
       <a href="profile.html">👤 Profile</a>
       <a href="chat.html">💬 Alerts</a>
     </nav>
-    <h1>💬 Live Order Alerts</h1>
-    <p id="authStatus">Loading user...</p>
+    <h1>💬 Live Orders</h1>
+    <p id="roleInfo">Loading...</p>
   </header>
 
   <main>
-    <ul id="notificationList"></ul>
+    <ul id="feedList"></ul>
   </main>
 
   <script type="module">
     import { createClient } from 'https://esm.sh/@supabase/supabase-js';
+
     const supabase = createClient(
       'https://neigxicrhalonnsaqkud.supabase.co',
-      'your-anon-key' // Replace with your real anon key 🔐
+      'your-anon-key' // Replace this with your actual anon key
     );
 
-    const authStatus = document.getElementById('authStatus');
-    const notificationList = document.getElementById('notificationList');
+    const feedList = document.getElementById('feedList');
+    const roleInfo = document.getElementById('roleInfo');
 
-    let currentUser;
     const { data: authData } = await supabase.auth.getUser();
-    currentUser = authData?.user;
-
+    const currentUser = authData?.user;
     if (!currentUser) {
-      authStatus.textContent = '🔒 Please sign in first';
+      roleInfo.textContent = '🔒 Please sign in';
       return;
     }
 
-    authStatus.textContent = `✅ Signed in as ${currentUser.email}`;
+    // 🔎 Get user role
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role, name')
+      .eq('id', currentUser.id)
+      .single();
 
-    // ✅ Listen for new orders
-    supabase
-      .channel('order_alerts')
-      .on('postgres_changes', {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'orders'
-      }, async (payload) => {
-        const order = payload.new;
+    const role = profile?.role;
+    roleInfo.textContent = `Signed in as ${currentUser.email} (${role})`;
 
-        // 🧠 Fetch the dish and its store
-        const { data: foodData, error } = await supabase
-          .from('foods')
-          .select('name, store_id, stores(owner_id)')
-          .eq('id', order.food_id)
-          .single();
+    if (role === 'consumer') {
+      // 🛒 Show user's orders
+      const { data: orders } = await supabase
+        .from('orders')
+        .select('timestamp, status, foods(name)')
+        .eq('user_id', currentUser.id)
+        .order('timestamp', { ascending: false });
 
-        if (error || !foodData?.stores) return;
-
-        // 🚦 Only notify if the dish belongs to the current user’s store
-        const ownerId = foodData.stores.owner_id;
-        if (ownerId !== currentUser.id) return;
-
-        // 🎉 Display alert
-        const msg = `🛎️ ${foodData.name} was ordered at ${new Date(order.timestamp).toLocaleTimeString()}`;
+      orders.forEach(order => {
+        const time = new Date(order.timestamp).toLocaleTimeString();
+        const msg = `🧾 You ordered ${order.foods.name} — ${order.status} at ${time}`;
         const li = document.createElement('li');
         li.textContent = msg;
-        notificationList.prepend(li);
+        feedList.appendChild(li);
+      });
+    }
 
-        // 🔔 Play sound
-        const audio = new Audio('/assets/ding.mp3'); // Add a ding.mp3 file
-        audio.play();
-      })
-      .subscribe();
+    if (role === 'store_owner') {
+      // 👨‍🍳 Listen for new orders
+      supabase
+        .channel('store_alerts')
+        .on('postgres_changes', {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'orders'
+        }, async ({ new: order }) => {
+          // Get the dish and its store
+          const { data: foodData } = await supabase
+            .from('foods')
+            .select('name, store_id, stores(owner_id)')
+            .eq('id', order.food_id)
+            .single();
+
+          // Only alert if dish belongs to this owner
+          if (foodData?.stores?.owner_id !== currentUser.id) return;
+
+          // Get buyer profile (name, address)
+          const { data: buyerProfile } = await supabase
+            .from('profiles')
+            .select('name, email, address')
+            .eq('id', order.user_id)
+            .single();
+
+          const buyerName = buyerProfile?.name ?? 'Unnamed';
+          const buyerEmail = buyerProfile?.email;
+          const buyerAddress = buyerProfile?.address ?? 'No address provided';
+          const time = new Date(order.timestamp).toLocaleTimeString();
+
+          const msg = `📦 ${foodData.name} was ordered by ${buyerName} (${buyerEmail})\n📍 ${buyerAddress} @ ${time}`;
+          const li = document.createElement('li');
+          li.textContent = msg;
+          feedList.prepend(li);
+
+          new Audio('/assets/ding.mp3').play(); // optional alert sound
+        })
+        .subscribe();
+    }
   </script>
 </body>
 </html>
