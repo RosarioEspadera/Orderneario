@@ -23,15 +23,15 @@
     <ul id="feedList"></ul>
   </main>
 
-<script type="module">
-  import { createClient } from 'https://esm.sh/@supabase/supabase-js';
+  <script type="module">
+    import { createClient } from 'https://esm.sh/@supabase/supabase-js';
 
-  const supabase = createClient(
-    'https://neigxicrhalonnsaqkud.supabase.co',
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5laWd4aWNyaGFsb25uc2Fxa3VkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI4NDQ3NjcsImV4cCI6MjA2ODQyMDc2N30.43DDOz-38NSc0nUejfTGOMD4xYBfzNvy4n0NFZWEfeo'
-  ); // ✅ Replace this with your actual anon key
+    const supabase = createClient(
+      'https://neigxicrhalonnsaqkud.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5laWd4aWNyaGFsb25uc2Fxa3VkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI4NDQ3NjcsImV4cCI6MjA2ODQyMDc2N30.43DDOz-38NSc0nUejfTGOMD4xYBfzNvy4n0NFZWEfeo' // 🔐 Replace with your real anon key
+    );
 
-  const feedList = document.getElementById('feedList');
+    const feedList = document.getElementById('feedList');
     const roleInfo = document.getElementById('roleInfo');
 
     (async () => {
@@ -43,7 +43,7 @@
         return;
       }
 
-      // ✅ Get user role from profiles
+      // 🔍 Get user role
       const { data: profile, error: roleError } = await supabase
         .from('profiles')
         .select('role')
@@ -60,7 +60,7 @@
       roleInfo.textContent = `Signed in as ${currentUser.email} (${role})`;
 
       if (role === 'consumer') {
-        // 🛒 Show recent confirmed orders
+        // 🧾 Show recent orders
         const { data: orders } = await supabase
           .from('orders')
           .select('timestamp, status, foods(name)')
@@ -77,7 +77,43 @@
       }
 
       if (role === 'store_owner') {
-        // 👨‍🍳 Realtime subscription to new orders
+        // 🛎️ Fallback fetch (last 10 minutes)
+        const recentCutoff = new Date(Date.now() - 10 * 60000).toISOString();
+
+        const { data: recentOrders } = await supabase
+          .from('orders')
+          .select('timestamp, food_id, user_id')
+          .gt('timestamp', recentCutoff);
+
+        for (const order of recentOrders ?? []) {
+          const { data: dish } = await supabase
+            .from('foods')
+            .select('name, store_id')
+            .eq('id', order.food_id)
+            .single();
+          if (!dish) continue;
+
+          const { data: store } = await supabase
+            .from('stores')
+            .select('owner_id')
+            .eq('id', dish.store_id)
+            .single();
+          if (!store || store.owner_id !== currentUser.id) continue;
+
+          const { data: buyer } = await supabase
+            .from('profiles')
+            .select('name, email, address')
+            .eq('id', order.user_id)
+            .single();
+
+          const time = new Date(order.timestamp).toLocaleTimeString();
+          const msg = `📦 ${dish.name} was ordered by ${buyer?.name ?? 'Unnamed'} (${buyer?.email ?? 'No email'})\n📍 ${buyer?.address ?? 'No address'} @ ${time}`;
+          const li = document.createElement('li');
+          li.textContent = msg;
+          feedList.appendChild(li);
+        }
+
+        // 🔔 Live alerts
         supabase
           .channel('order-alerts')
           .on('postgres_changes', {
@@ -85,14 +121,16 @@
             schema: 'public',
             table: 'orders'
           }, async ({ new: order }) => {
-            const { data: dish } = await supabase
+            console.log("✅ Realtime trigger:", order);
+
+            const { data: dish, error: dishError } = await supabase
               .from('foods')
               .select('name, store_id')
               .eq('id', order.food_id)
               .single();
             if (!dish) return;
 
-            const { data: store } = await supabase
+            const { data: store, error: storeError } = await supabase
               .from('stores')
               .select('owner_id')
               .eq('id', dish.store_id)
@@ -105,17 +143,13 @@
               .eq('id', order.user_id)
               .single();
 
-            const buyerName = buyer?.name ?? 'Unnamed';
-            const buyerEmail = buyer?.email ?? 'No email';
-            const buyerAddress = buyer?.address ?? 'No address provided';
             const time = new Date(order.timestamp).toLocaleTimeString();
-
-            const msg = `📦 ${dish.name} was ordered by ${buyerName} (${buyerEmail})\n📍 ${buyerAddress} @ ${time}`;
+            const msg = `📦 ${dish.name} was ordered by ${buyer?.name ?? 'Unnamed'} (${buyer?.email ?? 'No email'})\n📍 ${buyer?.address ?? 'No address'} @ ${time}`;
             const li = document.createElement('li');
             li.textContent = msg;
             feedList.prepend(li);
 
-            new Audio('/assets/ding.mp3').play(); // ✅ Ensure ding.mp3 exists
+            new Audio('/assets/ding.mp3').play(); // Make sure this file exists
           })
           .subscribe();
       }
