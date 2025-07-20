@@ -9,10 +9,13 @@ const supabase = createClient(
 );
 
 // 👤 Auth
-let currentUser = null;
-const { data } = await supabase.auth.getUser();
-currentUser = data?.user;
-if (!currentUser) return alert('🔒 Please sign in first.');
+(async () => {
+  const { data } = await supabase.auth.getUser();
+  currentUser = data?.user;
+  if (!currentUser) {
+    alert('🔒 Please sign in first.');
+    return;
+  }
 
 // 📦 DOM Elements
 const orderList = document.getElementById('orderList');
@@ -91,3 +94,4 @@ checkoutForm.addEventListener('submit', async (e) => {
     .eq('user_id', currentUser.id)
     .eq('status', 'pending');
 });
+})();
