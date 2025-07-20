@@ -77,6 +77,12 @@ function initMap() {
   map = L.map('map').setView([7.032, 125.092], 13);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 }
+async function loadAllStores() {
+  const { data, error } = await supabase.from('stores').select('*');
+  if (error) return console.error("❌ Failed to load stores:", error.message);
+
+  data.forEach(store => addStoreToMap(store));
+}
 
 // 📍 Auto-geolocation
 async function locateNearby() {
