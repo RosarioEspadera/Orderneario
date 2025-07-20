@@ -32,88 +32,94 @@
   ); // ✅ Replace this with your actual anon key
 
   const feedList = document.getElementById('feedList');
-  const roleInfo = document.getElementById('roleInfo');
+    const roleInfo = document.getElementById('roleInfo');
 
-  // ✅ Wrap the whole logic in an async IIFE
-  (async () => {
-    const { data: authData } = await supabase.auth.getUser();
-    const currentUser = authData?.user;
+    (async () => {
+      const { data: authData } = await supabase.auth.getUser();
+      const currentUser = authData?.user;
 
-    if (!currentUser) {
-      roleInfo.textContent = '🔒 Please sign in';
-      return;
-    }
+      if (!currentUser) {
+        roleInfo.textContent = '🔒 Please sign in';
+        return;
+      }
 
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', currentUser.id)
-      .single();
+      // ✅ Get user role from profiles
+      const { data: profile, error: roleError } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', currentUser.id)
+        .single();
 
-    const role = profile?.role;
-    roleInfo.textContent = `Signed in as ${currentUser.email} (${role})`;
+      if (roleError || !profile) {
+        roleInfo.textContent = '⚠️ Unable to load role';
+        console.error('Role fetch error:', roleError?.message);
+        return;
+      }
 
-    if (role === 'consumer') {
-      const { data: orders } = await supabase
-        .from('orders')
-        .select('timestamp, status, foods(name)')
-        .eq('user_id', currentUser.id)
-        .order('timestamp', { ascending: false });
+      const role = profile.role;
+      roleInfo.textContent = `Signed in as ${currentUser.email} (${role})`;
 
-      orders?.forEach(order => {
-        const time = new Date(order.timestamp).toLocaleTimeString();
-        const msg = `🧾 You ordered ${order.foods.name} — ${order.status} @ ${time}`;
-        const li = document.createElement('li');
-        li.textContent = msg;
-        feedList.appendChild(li);
-      });
-    }
+      if (role === 'consumer') {
+        // 🛒 Show recent confirmed orders
+        const { data: orders } = await supabase
+          .from('orders')
+          .select('timestamp, status, foods(name)')
+          .eq('user_id', currentUser.id)
+          .order('timestamp', { ascending: false });
 
-    if (role === 'store_owner') {
-      supabase
-        .channel('order-alerts')
-        .on('postgres_changes', {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'orders'
-        }, async ({ new: order }) => {
-          console.log("Realtime received", order.food_id);
-          const { data: dish } = await supabase
-            .from('foods')
-            .select('name, store_id')
-            .eq('id', order.food_id)
-            .single();
-          if (!dish) return;
-
-          const { data: store } = await supabase
-            .from('stores')
-            .select('owner_id')
-            .eq('id', dish.store_id)
-            .single();
-          if (!store || store.owner_id !== currentUser.id) return;
-
-          const { data: buyer } = await supabase
-            .from('profiles')
-            .select('name, email, address')
-            .eq('id', order.user_id)
-            .single();
-
-          const buyerName = buyer?.name ?? 'Unnamed';
-          const buyerEmail = buyer?.email ?? 'No email';
-          const buyerAddress = buyer?.address ?? 'No address provided';
+        orders?.forEach(order => {
           const time = new Date(order.timestamp).toLocaleTimeString();
-
-          const msg = `📦 ${dish.name} was ordered by ${buyerName} (${buyerEmail})\n📍 ${buyerAddress} @ ${time}`;
+          const msg = `🧾 You ordered ${order.foods.name} — ${order.status} @ ${time}`;
           const li = document.createElement('li');
           li.textContent = msg;
-          feedList.prepend(li);
+          feedList.appendChild(li);
+        });
+      }
 
-          new Audio('/assets/ding.mp3').play(); // 🔔 Make sure this file exists
-        })
-        .subscribe();
-    }
-  })();
-</script>
+      if (role === 'store_owner') {
+        // 👨‍🍳 Realtime subscription to new orders
+        supabase
+          .channel('order-alerts')
+          .on('postgres_changes', {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'orders'
+          }, async ({ new: order }) => {
+            const { data: dish } = await supabase
+              .from('foods')
+              .select('name, store_id')
+              .eq('id', order.food_id)
+              .single();
+            if (!dish) return;
 
+            const { data: store } = await supabase
+              .from('stores')
+              .select('owner_id')
+              .eq('id', dish.store_id)
+              .single();
+            if (!store || store.owner_id !== currentUser.id) return;
+
+            const { data: buyer } = await supabase
+              .from('profiles')
+              .select('name, email, address')
+              .eq('id', order.user_id)
+              .single();
+
+            const buyerName = buyer?.name ?? 'Unnamed';
+            const buyerEmail = buyer?.email ?? 'No email';
+            const buyerAddress = buyer?.address ?? 'No address provided';
+            const time = new Date(order.timestamp).toLocaleTimeString();
+
+            const msg = `📦 ${dish.name} was ordered by ${buyerName} (${buyerEmail})\n📍 ${buyerAddress} @ ${time}`;
+            const li = document.createElement('li');
+            li.textContent = msg;
+            feedList.prepend(li);
+
+            new Audio('/assets/ding.mp3').play(); // ✅ Ensure ding.mp3 exists
+          })
+          .subscribe();
+      }
+    })();
+  </script>
 </body>
 </html>
