@@ -8,37 +8,34 @@
   <link rel="icon" href="favicon.ico" />
 </head>
 <body>
-    <nav class="tab-nav">
-      <a href="homepage.html">🏠 Home</a>
-      <a href="dashboard.html">📋 Dashboard</a>
-      <a href="map.html">🗺️ Map</a>
-      <a href="checkout.html">🧾 Checkout</a>
-      <a href="profile.html">👤 Profile</a>
-      <a href="chat.html">💬 Alerts</a>
-    </nav>
+  <nav class="tab-nav">
+    <a href="homepage.html">🏠 Home</a>
+    <a href="dashboard.html">📋 Dashboard</a>
+    <a href="map.html">🗺️ Map</a>
+    <a href="checkout.html">🧾 Checkout</a>
+    <a href="profile.html">👤 Profile</a>
+    <a href="chat.html">💬 Alerts</a>
+  </nav>
 
   <main>
     <h1>🧾 Your Orders</h1>
     <ul id="orderList"></ul>
     <p><strong>Total:</strong> ₱<span id="totalAmount">0.00</span></p>
-   <form id="checkoutForm">
-  <h2>🧾 Order Confirmation</h2>
 
-  <label>Email</label>
-  <input type="email" id="userEmail" required />
+    <form id="checkoutForm">
+      <h2>✅ Confirm Your Info</h2>
 
-  <label>Name</label>
-  <input type="text" id="userName" placeholder="Optional" />
+      <label for="userEmail">Email <span style="color: red">*</span></label>
+      <input type="email" id="userEmail" required />
 
-  <label>Address</label>
-  <textarea id="userAddress" rows="2" placeholder="Optional"></textarea>
+      <label for="userName">Full Name</label>
+      <input type="text" id="userName" placeholder="Optional" />
 
-  <button type="submit">✅ Confirm Order</button>
-</form>
+      <label for="userAddress">Address</label>
+      <textarea id="userAddress" rows="2" placeholder="Optional"></textarea>
 
-<ul id="orderList"></ul>
-<p>Total: ₱<span id="totalAmount">0.00</span></p>
-
+      <button type="submit">🛒 Place Order</button>
+    </form>
   </main>
 
   <script type="module" src="src/js/checkout.js"></script>
