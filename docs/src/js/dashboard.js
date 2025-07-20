@@ -219,7 +219,11 @@ window.viewMenu = async (storeId, storeName) => {
     li.innerHTML = `
       <img src="${item.image_url}" width="100" />
       <p><strong>${item.name}</strong> – ₱${item.price}<br>${item.description}</p>
-      ${role === 'store_owner' ? `<button onclick="editDish('${item.id}')">✏️ Edit</button>` : ''}
+    ${role === 'store_owner' ? `
+  <button onclick="editDish('${item.id}')">✏️ Edit</button>
+  <button onclick="deleteDish('${item.id}')">🗑️ Delete</button>
+` : ''}
+
     `;
     list.appendChild(li);
   });
@@ -257,6 +261,18 @@ document.getElementById('editDishForm')?.addEventListener('submit', async (e) =>
   closeEditModal();
   window.location.reload(); // Or re-call viewMenu
 });
+window.deleteDish = async (dishId) => {
+  if (!confirm("❌ Are you sure you want to delete this dish?")) return;
 
-//
+  const { error } = await supabase
+    .from('foods')
+    .delete()
+    .eq('id', dishId);
+
+  if (error) return alert("⚠️ Failed to delete dish: " + error.message);
+
+  alert("✅ Dish deleted!");
+  window.location.reload(); // Or re-call viewMenu if storeId is still known
+};
+
 
