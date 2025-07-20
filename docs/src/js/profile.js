@@ -43,6 +43,7 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   if (authStatus) authStatus.textContent = `✅ Signed in as ${user.email}`;
   if (logoutBtn) logoutBtn.style.display = 'inline-block';
 
+  
   // 🔓 Logout
   logoutBtn.addEventListener('click', async () => {
     const { error } = await supabase.auth.signOut();
@@ -52,4 +53,45 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
       window.location.href = location.origin + '/Orderneario/index.html';
     }
   });
+})();
+
+(async () => {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+
+  const userId = user.id;
+
+  // 🏪 Fetch latest store
+  const { data: store } = await supabase
+    .from('stores')
+    .select('*')
+    .eq('owner_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .single();
+
+  // 🍱 Fetch latest dish
+  const { data: dish } = await supabase
+    .from('foods')
+    .select('*')
+    .eq('uploader_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .single();
+
+  // 🎨 Render to profile
+  if (store) {
+    document.getElementById('latestStore').innerHTML = `
+      <h3>🏪 Your Store: ${store.name}</h3>
+      <p>${store.address}</p>
+    `;
+  }
+
+  if (dish) {
+    document.getElementById('latestDish').innerHTML = `
+      <h3>🍽️ Recent Dish: ${dish.name}</h3>
+      <img src="${dish.image_url}" width="150" />
+      <p>${dish.description} – ₱${dish.price}</p>
+    `;
+  }
 })();
