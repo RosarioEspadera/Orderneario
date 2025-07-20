@@ -5,26 +5,29 @@ const SUPABASE_URL = 'https://neigxicrhalonnsaqkud.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5laWd4aWNyaGFsb25uc2Fxa3VkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI4NDQ3NjcsImV4cCI6MjA2ODQyMDc2N30.43DDOz-38NSc0nUejfTGOMD4xYBfzNvy4n0NFZWEfeo';
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// 🗺️ Initialize the map
+// 🧭 Initialize the map
 const map = L.map('map').setView([7.032, 125.092], 13);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-// 🧑‍🍳 Detect user and role
-let currentUser = null;
-let userRole = 'guest';
-
-(async () => {
-  const { data } = await supabase.auth.getUser();
-  currentUser = data?.user || null;
-  userRole = currentUser?.user_metadata?.role || 'guest';
-})();
-
-// 📦 DOM elements
+// 🌐 DOM Elements
 const panel = document.getElementById('menuPanel');
 const titleEl = document.getElementById('menuTitle');
 const listEl = document.getElementById('menuList');
 
-// 📌 Render store marker
+// 👤 Auth + Role
+let currentUser = null;
+let userRole = 'guest';
+
+// 🔐 Ensure Auth Loads Before Actions
+const initAuth = async () => {
+  const { data } = await supabase.auth.getUser();
+  currentUser = data?.user || null;
+  userRole = currentUser?.user_metadata?.role || 'guest';
+};
+
+await initAuth(); // Wait before continuing
+
+// 📍 Render Store Marker
 function renderStore(store) {
   const marker = L.marker([store.lat, store.lng]).addTo(map);
   marker.bindPopup(`
@@ -34,23 +37,23 @@ function renderStore(store) {
   `);
 }
 
-// 📍 Load all stores
-async function loadStores() {
+// 🗺️ Load Stores
+const loadStores = async () => {
   const { data: stores, error } = await supabase.from('stores').select('*');
-  if (error) return console.error('❌ Failed to load stores:', error.message);
+  if (error) return console.error("❌ Store load error:", error.message);
   stores.forEach(renderStore);
-}
-loadStores();
+};
+await loadStores();
 
-// 🔁 Realtime store sync
+// 🔄 Realtime Store Sync
 supabase.channel('realtime-stores')
   .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'stores' }, ({ new: store }) => {
-    console.log('📦 New store added:', store);
+    console.log("📦 New store added:", store);
     renderStore(store);
   })
   .subscribe();
 
-// 🍽️ View menu for selected store
+// 🍽️ View Menu
 window.viewMenu = async (storeId, storeName) => {
   const { data: foods, error } = await supabase
     .from('foods')
@@ -71,18 +74,23 @@ window.viewMenu = async (storeId, storeName) => {
       <p><strong>${item.name}</strong> – ₱${item.price}<br>${item.description}</p>
       ${userRole === 'store_owner'
         ? `<button onclick="editDish('${item.id}')">✏️ Edit</button>`
-        : `<button class="orderBtn" data-id="${item.id}">🛒 Order</button>`}
+        : `<button class="orderBtn" data-id="${item.id}" data-name="${item.name}">🛒 Order</button>`}
     `;
     listEl.appendChild(li);
   });
 };
 
-// 🛍️ Place an order
+// 🛒 Place an Order (Safe Insert)
 window.placeOrder = async (foodId) => {
-  if (!currentUser) return alert('🔒 Please sign in first.');
+  // ⏳ Ensure currentUser is loaded
+  if (!currentUser) {
+    const { data } = await supabase.auth.getUser();
+    currentUser = data?.user;
+    if (!currentUser) return alert('🔒 Please sign in first.');
+  }
 
-  // ⏳ Insert the order with status "pending"
-  const { error, data } = await supabase.from('orders').insert([{
+  // ✅ Insert into orders
+  const { error } = await supabase.from('orders').insert([{
     user_id: currentUser.id,
     food_id: foodId,
     status: 'pending',
@@ -90,29 +98,18 @@ window.placeOrder = async (foodId) => {
   }]);
 
   if (error) return alert(`❌ Order failed: ${error.message}`);
-
-  // 🎉 Success feedback
-  alert('✅ Dish added to your order! Visit the 🧾 Checkout page to confirm.');
-
-  // Optional: Visual update
-  const btn = document.querySelector(`[data-id="${foodId}"]`);
-  if (btn) {
-    btn.textContent = '✅ Ordered';
-    btn.disabled = true;
-    btn.classList.add('ordered');
-  }
+  alert('✅ Dish added to your order! Check out 🧾 Checkout page to confirm.');
 };
 
-// 🎯 Button click handler
-document.addEventListener('click', (e) => {
+// 🎯 Event Delegation
+document.addEventListener('click', async (e) => {
   if (e.target.matches('.viewMenuBtn')) {
-    const id = e.target.dataset.id;
-    const name = e.target.dataset.name;
-    viewMenu(id, name);
+    const { id, name } = e.target.dataset;
+    await viewMenu(id, name);
   }
 
   if (e.target.matches('.orderBtn')) {
-    const foodId = e.target.dataset.id;
-    placeOrder(foodId);
+    const { id } = e.target.dataset;
+    await placeOrder(id);
   }
 });
