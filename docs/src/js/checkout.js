@@ -44,10 +44,13 @@ checkoutForm.addEventListener('submit', async (e) => {
   const summary = orderSummary.join('\n');
   const total = totalEl.textContent;
 
-  const templateParams = {
-    to_email: email,
-    message: `Thank you for your order!\n\nYour dishes:\n${summary}\n\nTotal: ₱${total}`,
-  };
+ const templateParams = {
+  to_email: email,
+  order_summary: orderSummary.map(item => `<li>${item}</li>`).join(''),
+  total,
+  timestamp: new Date().toLocaleString(),
+};
+
 
   try {
     await emailjs.send('service_epydqmi', 'template_6d3ltu9', templateParams);
