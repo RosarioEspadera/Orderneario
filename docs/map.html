@@ -4,19 +4,18 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="icon" href="favicon.ico" type="image/x-icon" />
   <title>Orderneario Map</title>
-  <link rel="stylesheet" href="style.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <!-- 📁 Navigation Tabs -->
-<nav class="tab-nav">
-  <a href="homepage.html">🏠 Home</a>
-  <a href="dashboard.html">📋 Dashboard</a>
-  <a href="map.html">🗺️ Map</a>
-  <a href="profile.html">👤 Profile</a>
-</nav>
+  <nav class="tab-nav">
+    <a href="homepage.html">🏠 Home</a>
+    <a href="dashboard.html">📋 Dashboard</a>
+    <a href="map.html">🗺️ Map</a>
+    <a href="profile.html">👤 Profile</a>
+  </nav>
 
   <header>
     <h1>🗺️ Nearby Stores</h1>
@@ -25,15 +24,13 @@
 
   <main>
     <div id="map" style="height: 500px;"></div>
-  <div id="menuPanel" style="display:none;">
-  <h2 id="menuTitle">🍽️ Menu</h2>
-  <ul id="menuList"></ul>
-</div>
-
+    <div id="menuPanel" style="display:none;">
+      <h2 id="menuTitle">🍽️ Menu</h2>
+      <ul id="menuList"></ul>
+    </div>
   </main>
 
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script type="module" src="src/js/map.js"></script>
 </body>
 </html>
-
