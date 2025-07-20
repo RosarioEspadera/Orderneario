@@ -31,14 +31,23 @@ function setupNavbar() {
 }
 
 // 🏪 Populate store dropdown
+let userStoreId = null;
+
 async function setupStoreDropdown() {
   if (userRole !== 'store_owner') return;
+
   const { data, error } = await supabase
     .from('stores')
     .select('id, name')
     .eq('owner_id', userId);
 
-  if (error) return console.error("Failed to load stores:", error.message);
+  if (error || !data?.length) {
+    console.error("❌ No store found for user:", error?.message);
+    return;
+  }
+
+  userStoreId = data[0].id; // Use first store (or loop if multiple)
+
   const select = document.getElementById('storeSelect');
   data.forEach(store => {
     const opt = document.createElement('option');
@@ -47,6 +56,7 @@ async function setupStoreDropdown() {
     select.appendChild(opt);
   });
 }
+
 
 // 🗺️ Leaflet setup
 function initMap() {
@@ -139,7 +149,7 @@ document.getElementById('uploadForm')?.addEventListener('submit', async (e) => {
 
   if (uploadError) return alert("❌ Image upload failed: " + uploadError.message);
   const imageUrl = `${SUPABASE_URL}/storage/v1/object/public/dish-images/${uploadData.path}`;
-  const store_id = form.get('store_id');
+  const store_id = userStoreId;
 
   const { error: insertError } = await supabase.from('foods').insert([{
     name: form.get('name'),
@@ -185,6 +195,26 @@ function haversine(lat1, lon1, lat2, lon2) {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 const toRad = deg => deg * Math.PI / 180;
+
+// 🚀 Auto-load logged-in owner's store
+(async () => {
+  const { data } = await supabase.auth.getUser();
+  const role = data?.user?.user_metadata?.role;
+  const uid = data?.user?.id;
+
+  if (role === 'store_owner') {
+    const { data: stores, error } = await supabase
+      .from('stores')
+      .select('*')
+      .eq('owner_id', uid);
+
+    if (stores?.length) {
+      const myStore = stores[0];
+      renderStore(myStore);         // inject marker if not already shown
+      viewMenu(myStore.id, myStore.name); // auto-show menu panel
+    }
+  }
+})();
 
 // 🧑‍🍳 View Menu Per Store
 window.viewMenu = async (storeId, storeName) => {
