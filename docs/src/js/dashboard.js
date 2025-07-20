@@ -190,7 +190,6 @@ document.getElementById('uploadForm')?.addEventListener('submit', async (e) => {
  if (insertError) {
   alert("❌ Dish insert failed: " + insertError.message);
 } else {
- else {
   console.log("✅ Dish inserted:", insertResult);
 }
 });
