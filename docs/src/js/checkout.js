@@ -80,44 +80,42 @@ const supabase = createClient(
   const timestamp = new Date().toLocaleString();
 
   // 📨 Form submission
-  checkoutForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
+checkoutForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
 
-    const email = userEmailInput.value.trim();
-    const name = userNameInput.value.trim();
-    const address = userAddressInput.value.trim();
-    const mapLink = `https://www.google.com/maps/search/?q=${encodeURIComponent(address)}`;
+  const buyerEmail = userEmailInput.value.trim();
+  const buyerName = userNameInput.value.trim();
+  const buyerAddress = userAddressInput.value.trim();
+  const timestamp = new Date().toLocaleString();
+  const mapLink = `https://www.google.com/maps/search/?q=${encodeURIComponent(buyerAddress)}`;
 
-    if (!email) {
-      alert("📬 Email is required.");
-      return;
-    }
+  if (!buyerEmail) {
+    alert("📬 Email is required.");
+    return;
+  }
 
-    // 💌 Buyer receipt
+  try {
+    // 💌 1. Send buyer receipt
     await emailjs.send('service_epydqmi', 'template_6d3ltu9', {
-      to_email: email,
-      buyer_name: name,
-      buyer_address: address,
+      to_email: buyerEmail,
+      buyer_name: buyerName,
+      buyer_address: buyerAddress,
       order_summary: summary,
       order_total: total.toFixed(2),
       timestamp,
       map_link: mapLink
     });
 
-    // 📬 Seller notifications
+    // 📬 2. Group orders by store
     const { data: pendingOrders } = await supabase
       .from('orders')
       .select('food_id')
       .eq('user_id', currentUser.id)
       .eq('status', 'pending');
 
-    if (!pendingOrders || pendingOrders.length === 0) {
-      console.error('❌ No seller orders found.');
-      return;
-    }
-
     const grouped = new Map();
-    for (const order of pendingOrders) {
+
+    for (const order of pendingOrders ?? []) {
       const { data: food } = await supabase
         .from('foods')
         .select('name, store_id')
@@ -126,33 +124,43 @@ const supabase = createClient(
       if (!food) continue;
 
       const { data: store } = await supabase
-        .from('stores')
-        .select('email')
-        .eq('id', food.store_id)
-        .single();
-      const storeEmail = store?.email;
-      if (!storeEmail) continue;
+  .from('stores')
+  .select('owner_id')
+  .eq('id', food.store_id)
+  .single();
 
+if (!store || !store.owner_id) continue;
+const { data: owner } = await supabase
+  .from('profiles')
+  .select('email')
+  .eq('id', store.owner_id)
+  .single();
+
+const storeEmail = owner?.email;
+      
       const line = `• ${food.name}`;
       if (!grouped.has(storeEmail)) grouped.set(storeEmail, []);
       grouped.get(storeEmail).push(line);
     }
 
+    // 💌 3. Send seller receipts
     for (const [storeEmail, dishes] of grouped.entries()) {
-      const sellerMessage = `📦 New order:\n\n${dishes.join('\n')}\n\nTotal: ₱${total}\nDate: ${timestamp}\nFrom: ${name || 'Unnamed'} (${email})\n📍 ${address || 'No address provided'}\n🗺️ ${mapLink}`;
       await emailjs.send('service_epydqmi', 'template_6d3ltu9', {
         to_email: storeEmail,
-        message: sellerMessage
+        message: `📦 New order:\n\n${dishes.join('\n')}\n\nTotal: ₱${total.toFixed(2)}\nDate: ${timestamp}\nFrom: ${buyerName || 'Unnamed'} (${buyerEmail})\n📍 ${buyerAddress || 'No address provided'}\n🗺️ ${mapLink}`
       });
     }
 
-    alert('✅ Receipts sent to buyer and store owner!');
-
-    // ✅ Mark orders as confirmed
+    // ✅ Final: Mark orders as confirmed
     await supabase
       .from('orders')
       .update({ status: 'confirmed' })
       .eq('user_id', currentUser.id)
       .eq('status', 'pending');
-  });
-})();
+
+    alert('✅ Receipts sent to buyer and store owner!');
+  } catch (err) {
+    console.error("Receipt send failed:", err);
+    alert('❌ Failed to send receipt(s). Please try again.');
+  }
+});
