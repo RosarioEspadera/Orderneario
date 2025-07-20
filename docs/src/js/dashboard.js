@@ -77,6 +77,18 @@ function initMap() {
   map = L.map('map').setView([7.032, 125.092], 13);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 }
+function addStoreToMap(store) {
+  if (!store.lat || !store.lng || storeMarkers[store.id]) return;
+
+  const marker = L.marker([store.lat, store.lng]).addTo(map);
+  marker.bindPopup(`
+    <strong>${store.name}</strong><br>${store.address}<br>
+    <button onclick="viewMenu('${store.id}', '${store.name}')">🍽️ View Menu</button>
+  `);
+
+  storeMarkers[store.id] = marker;
+}
+
 async function loadAllStores() {
   const { data, error } = await supabase.from('stores').select('*');
   if (error) return console.error("❌ Failed to load stores:", error.message);
