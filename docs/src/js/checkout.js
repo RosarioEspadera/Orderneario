@@ -63,10 +63,19 @@ const supabase = createClient(
     // ✅ Buyer email payload
     const buyerMessage = `✅ Your order:\n\n${summary}\n\nTotal: ₱${total}\nDate: ${timestamp}\n\nName: ${name || '—'}\nAddress: ${address || '—'}`;
 
-    await emailjs.send('service_epydqmi', 'template_6d3ltu9', {
-      to_email: email,
-      message: buyerMessage
-    });
+const mapLink = `https://www.google.com/maps/search/?q=${encodeURIComponent(address)}`;
+
+await emailjs.send('service_epydqmi', 'template_6d3ltu9', {
+  to_email: email,
+  buyer_name: name,
+  buyer_address: address,
+  order_summary: summary,
+  order_total: total.toFixed(2),
+  timestamp,
+  map_link: mapLink
+});
+
+
 
     // 📬 Seller lookup
     const { data: sellerOrders } = await supabase
