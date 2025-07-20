@@ -88,6 +88,14 @@ function addStoreToMap(store) {
 
   storeMarkers[store.id] = marker;
 }
+function watchStoreSync() {
+  supabase.channel('store-sync')
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'stores' }, ({ new: store }) => {
+      console.log("⚡ New store added:", store.name);
+      addStoreToMap(store);
+    })
+    .subscribe();
+}
 
 async function loadAllStores() {
   const { data, error } = await supabase.from('stores').select('*');
