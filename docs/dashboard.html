@@ -4,21 +4,16 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Orderneario Dashboard</title>
-  <link rel="icon" href="favicon.ico" type="image/x-icon" />
   <link rel="stylesheet" href="style.css" />
-
-  <!-- 🗺️ Leaflet CSS & JS -->
+  <link rel="icon" href="favicon.ico" />
+  <!-- 🗺️ Leaflet -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
+
 <body>
-  <!-- 📁 Navigation -->
-  <nav class="tab-nav">
-    <a href="homepage.html">🏠 Home</a>
-    <a href="dashboard.html">📋 Dashboard</a>
-    <a href="map.html">🗺️ Map</a>
-    <a href="profile.html">👤 Profile</a>
-  </nav>
+  <!-- 🧭 Navigation -->
+  <nav class="tab-nav"></nav>
 
   <header>
     <h1>📋 Store Dashboard</h1>
@@ -26,14 +21,13 @@
   </header>
 
   <main>
-    <!-- 🔐 Store Owner Panel -->
-    <div id="storeUploadPanel" style="display:none;">
+    <!-- 🏪 Store Owner Panel -->
+    <div id="storeUploadPanel" style="display: none;">
       <section>
         <h2>🏪 Register Store</h2>
         <form id="storeForm">
           <input type="text" name="name" placeholder="Store Name" required />
           <input type="text" name="address" placeholder="Address" required />
-          <!-- Location controls -->
           <label>
             <input type="checkbox" id="autoLocationToggle" />
             Auto-detect my location
@@ -53,29 +47,27 @@
           <input type="text" name="description" placeholder="Description" />
           <input type="number" step="0.01" name="price" placeholder="Price" required />
           <input type="file" name="image" accept="image/*" required />
-
-          <label for="store_id">Select Store:</label>
-        <select id="storeSelect" name="storeSelect" onchange="userStoreId = this.value">
-
+          <label for="storeSelect">Select Store:</label>
+          <select id="storeSelect" name="storeSelect"></select>
           <button type="submit">Upload Dish</button>
         </form>
       </section>
     </div>
 
-    <!-- 🌍 Consumer Panel -->
-    <div id="mapLinkOnly" style="display:none;">
-      <p>🛍️ You're a consumer — browse the map to see stores near you.</p>
+    <!-- 🗺️ Consumer Panel -->
+    <div id="mapLinkOnly" style="display: none;">
+      <p>🛒 You're a consumer — browse the map to see stores near you.</p>
       <div id="map" style="height: 400px; margin: 20px auto;"></div>
     </div>
 
     <!-- 🍱 Menu Panel -->
-    <div id="menuPanel" style="display:none;">
+    <div id="menuPanel" style="display: none;">
       <h2 id="menuTitle">🍽️ Menu</h2>
       <ul id="menuList"></ul>
     </div>
 
     <!-- ✏️ Edit Dish Modal -->
-    <div id="editDishModal" style="display:none;">
+    <div id="editDishModal" style="display: none;">
       <h3>✏️ Edit Dish</h3>
       <form id="editDishForm">
         <input type="hidden" name="dish_id" />
@@ -87,7 +79,7 @@
       </form>
     </div>
   </main>
-  
+
   <script type="module" src="src/js/dashboard.js"></script>
 </body>
 </html>
