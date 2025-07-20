@@ -91,7 +91,7 @@ window.placeOrder = async (foodId) => {
 
   const newOrder = {
     user_id: currentUser.id,
-    food_id,
+    food_id: foodId,
     status: 'pending',
     timestamp: new Date().toISOString()
   };
