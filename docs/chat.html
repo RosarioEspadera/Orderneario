@@ -23,16 +23,22 @@
     <ul id="feedList"></ul>
   </main>
 
-  <script type="module">
-    import { createClient } from 'https://esm.sh/@supabase/supabase-js';
+<script type="module">
+  import { createClient } from 'https://esm.sh/@supabase/supabase-js';
 
-    const supabase = createClient('https://neigxicrhalonnsaqkud.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5laWd4aWNyaGFsb25uc2Fxa3VkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI4NDQ3NjcsImV4cCI6MjA2ODQyMDc2N30.43DDOz-38NSc0nUejfTGOMD4xYBfzNvy4n0NFZWEfeo'); // 🔐 Replace with actual anon key
-    const feedList = document.getElementById('feedList');
-    const roleInfo = document.getElementById('roleInfo');
+  const supabase = createClient(
+    'https://neigxicrhalonnsaqkud.supabase.co',
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5laWd4aWNyaGFsb25uc2Fxa3VkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI4NDQ3NjcsImV4cCI6MjA2ODQyMDc2N30.43DDOz-38NSc0nUejfTGOMD4xYBfzNvy4n0NFZWEfeo'
+  ); // ✅ Replace this with your actual anon key
 
-    // 👤 Get current user and role
+  const feedList = document.getElementById('feedList');
+  const roleInfo = document.getElementById('roleInfo');
+
+  // ✅ Wrap the whole logic in an async IIFE
+  (async () => {
     const { data: authData } = await supabase.auth.getUser();
     const currentUser = authData?.user;
+
     if (!currentUser) {
       roleInfo.textContent = '🔒 Please sign in';
       return;
@@ -48,7 +54,6 @@
     roleInfo.textContent = `Signed in as ${currentUser.email} (${role})`;
 
     if (role === 'consumer') {
-      // 🛒 Show recent orders for the consumer
       const { data: orders } = await supabase
         .from('orders')
         .select('timestamp, status, foods(name)')
@@ -65,7 +70,6 @@
     }
 
     if (role === 'store_owner') {
-      // 👨‍🍳 Subscribe to new orders
       supabase
         .channel('order-alerts')
         .on('postgres_changes', {
@@ -73,25 +77,20 @@
           schema: 'public',
           table: 'orders'
         }, async ({ new: order }) => {
-          // Step 1: Get the dish
           const { data: dish } = await supabase
             .from('foods')
             .select('name, store_id')
             .eq('id', order.food_id)
             .single();
-
           if (!dish) return;
 
-          // Step 2: Get the store info
           const { data: store } = await supabase
             .from('stores')
             .select('owner_id')
             .eq('id', dish.store_id)
             .single();
-
           if (!store || store.owner_id !== currentUser.id) return;
 
-          // Step 3: Get buyer info
           const { data: buyer } = await supabase
             .from('profiles')
             .select('name, email, address')
@@ -108,11 +107,12 @@
           li.textContent = msg;
           feedList.prepend(li);
 
-          // 🔔 Optional sound
-          new Audio('/assets/ding.mp3').play(); // Add ding.mp3 to your assets folder
+          new Audio('/assets/ding.mp3').play(); // 🔔 Make sure this file exists
         })
         .subscribe();
     }
-  </script>
+  })();
+</script>
+
 </body>
 </html>
