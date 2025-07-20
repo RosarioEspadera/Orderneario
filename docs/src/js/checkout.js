@@ -8,6 +8,16 @@ const userEmailInput = document.getElementById('userEmail');
 const userNameInput = document.getElementById('userName');
 const userAddressInput = document.getElementById('userAddress');
 
+navigator.geolocation.getCurrentPosition((position) => {
+  const { latitude, longitude } = position.coords;
+  const geoLink = `https://www.google.com/maps/search/?q=${latitude},${longitude}`;
+  userAddressInput.value = `${latitude}, ${longitude}`;
+  console.log("🗺️ Auto-detected address:", geoLink);
+}, (error) => {
+  console.warn("📵 Location access denied:", error.message);
+});
+
+
 let orderSummary = [];
 
 const { data: authData } = await supabase.auth.getUser();
