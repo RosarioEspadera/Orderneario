@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>🔔 Store Alerts | Orderneario</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <nav class="tab-nav">
+      <a href="homepage.html">🏠 Home</a>
+      <a href="dashboard.html">📋 Dashboard</a>
+      <a href="map.html">🗺️ Map</a>
+      <a href="checkout.html">🧾 Checkout</a>
+      <a href="profile.html">👤 Profile</a>
+      <a href="chat.html">💬 Alerts</a>
+    </nav>
+    <h1>💬 Live Order Alerts</h1>
+    <p id="authStatus">Loading user...</p>
+  </header>
+
+  <main>
+    <ul id="notificationList"></ul>
+  </main>
+
+  <script type="module">
+    import { createClient } from 'https://esm.sh/@supabase/supabase-js';
+    const supabase = createClient(
+      'https://neigxicrhalonnsaqkud.supabase.co',
+      'your-anon-key' // Replace with your real anon key 🔐
+    );
+
+    const authStatus = document.getElementById('authStatus');
+    const notificationList = document.getElementById('notificationList');
+
+    let currentUser;
+    const { data: authData } = await supabase.auth.getUser();
+    currentUser = authData?.user;
+
+    if (!currentUser) {
+      authStatus.textContent = '🔒 Please sign in first';
+      return;
+    }
+
+    authStatus.textContent = `✅ Signed in as ${currentUser.email}`;
+
+    // ✅ Listen for new orders
+    supabase
+      .channel('order_alerts')
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'orders'
+      }, async (payload) => {
+        const order = payload.new;
+
+        // 🧠 Fetch the dish and its store
+        const { data: foodData, error } = await supabase
+          .from('foods')
+          .select('name, store_id, stores(owner_id)')
+          .eq('id', order.food_id)
+          .single();
+
+        if (error || !foodData?.stores) return;
+
+        // 🚦 Only notify if the dish belongs to the current user’s store
+        const ownerId = foodData.stores.owner_id;
+        if (ownerId !== currentUser.id) return;
+
+        // 🎉 Display alert
+        const msg = `🛎️ ${foodData.name} was ordered at ${new Date(order.timestamp).toLocaleTimeString()}`;
+        const li = document.createElement('li');
+        li.textContent = msg;
+        notificationList.prepend(li);
+
+        // 🔔 Play sound
+        const audio = new Audio('/assets/ding.mp3'); // Add a ding.mp3 file
+        audio.play();
+      })
+      .subscribe();
+  </script>
+</body>
+</html>
