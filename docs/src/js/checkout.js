@@ -18,16 +18,42 @@ const supabase = createClient(
     return;
   }
 
-  // DOM Elements
+  // DOM
   const orderList = document.getElementById('orderList');
   const totalEl = document.getElementById('totalAmount');
   const checkoutForm = document.getElementById('checkoutForm');
   const userEmailInput = document.getElementById('userEmail');
   const userNameInput = document.getElementById('userName');
   const userAddressInput = document.getElementById('userAddress');
+  const locateBtn = document.getElementById('locateBtn');
   const orderSummary = [];
 
-  // Load orders
+  // 📍 Location button
+  locateBtn.addEventListener('click', () => {
+    if (!navigator.geolocation) {
+      alert("Geolocation is not supported.");
+      return;
+    }
+
+    locateBtn.textContent = "📡 Locating...";
+    navigator.geolocation.getCurrentPosition(async ({ coords }) => {
+      const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${coords.latitude}&lon=${coords.longitude}`;
+      try {
+        const res = await fetch(url);
+        const data = await res.json();
+        userAddressInput.value = data.display_name || `${coords.latitude}, ${coords.longitude}`;
+      } catch {
+        alert("📡 Location lookup failed.");
+      } finally {
+        locateBtn.textContent = "📍 Use My Location";
+      }
+    }, () => {
+      alert("Unable to retrieve location.");
+      locateBtn.textContent = "📍 Use My Location";
+    });
+  });
+
+  // 🧾 Fetch pending orders
   const { data: orders, error } = await supabase
     .from('orders')
     .select('id, status, foods(name, price)')
@@ -53,7 +79,7 @@ const supabase = createClient(
   const summary = orderSummary.join('\n');
   const timestamp = new Date().toLocaleString();
 
-  // Handle form submit
+  // 📨 Form submission
   checkoutForm.addEventListener('submit', async (e) => {
     e.preventDefault();
 
@@ -62,7 +88,12 @@ const supabase = createClient(
     const address = userAddressInput.value.trim();
     const mapLink = `https://www.google.com/maps/search/?q=${encodeURIComponent(address)}`;
 
-    // Send receipt to buyer
+    if (!email) {
+      alert("📬 Email is required.");
+      return;
+    }
+
+    // 💌 Buyer receipt
     await emailjs.send('service_epydqmi', 'template_6d3ltu9', {
       to_email: email,
       buyer_name: name,
@@ -73,7 +104,7 @@ const supabase = createClient(
       map_link: mapLink
     });
 
-    // Manual seller lookup
+    // 📬 Seller notifications
     const { data: pendingOrders } = await supabase
       .from('orders')
       .select('food_id')
@@ -86,7 +117,6 @@ const supabase = createClient(
     }
 
     const grouped = new Map();
-
     for (const order of pendingOrders) {
       const { data: food } = await supabase
         .from('foods')
@@ -108,7 +138,6 @@ const supabase = createClient(
       grouped.get(storeEmail).push(line);
     }
 
-    // Send receipt to each store owner
     for (const [storeEmail, dishes] of grouped.entries()) {
       const sellerMessage = `📦 New order:\n\n${dishes.join('\n')}\n\nTotal: ₱${total}\nDate: ${timestamp}\nFrom: ${name || 'Unnamed'} (${email})\n📍 ${address || 'No address provided'}\n🗺️ ${mapLink}`;
       await emailjs.send('service_epydqmi', 'template_6d3ltu9', {
@@ -119,7 +148,7 @@ const supabase = createClient(
 
     alert('✅ Receipts sent to buyer and store owner!');
 
-    // Mark orders as confirmed
+    // ✅ Mark orders as confirmed
     await supabase
       .from('orders')
       .update({ status: 'confirmed' })
