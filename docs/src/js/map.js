@@ -81,14 +81,26 @@ window.viewMenu = async (storeId, storeName) => {
 window.placeOrder = async (foodId) => {
   if (!currentUser) return alert('🔒 Please sign in first.');
 
-  const { error } = await supabase.from('orders').insert([{
+  // ⏳ Insert the order with status "pending"
+  const { error, data } = await supabase.from('orders').insert([{
     user_id: currentUser.id,
     food_id: foodId,
     status: 'pending',
     timestamp: new Date().toISOString()
   }]);
 
-  alert(error ? `❌ Order failed: ${error.message}` : '✅ Order placed!');
+  if (error) return alert(`❌ Order failed: ${error.message}`);
+
+  // 🎉 Success feedback
+  alert('✅ Dish added to your order! Visit the 🧾 Checkout page to confirm.');
+
+  // Optional: Visual update
+  const btn = document.querySelector(`[data-id="${foodId}"]`);
+  if (btn) {
+    btn.textContent = '✅ Ordered';
+    btn.disabled = true;
+    btn.classList.add('ordered');
+  }
 };
 
 // 🎯 Button click handler
