@@ -185,7 +185,7 @@ document.getElementById('uploadForm')?.addEventListener('submit', async (e) => {
     image_url: imageUrl,
     uploader_id: userId,
    store_id: userStoreId
-  }]);
+  }])
 .select();
  if (insertError) {
   alert("❌ Dish insert failed: " + insertError.message);
