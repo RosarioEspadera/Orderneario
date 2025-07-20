@@ -55,9 +55,7 @@
           <input type="file" name="image" accept="image/*" required />
 
           <label for="store_id">Select Store:</label>
-          <select name="store_id" required id="storeSelect">
-            <!-- Options injected by JS -->
-          </select>
+        <select id="storeSelect" name="storeSelect" onchange="userStoreId = this.value">
 
           <button type="submit">Upload Dish</button>
         </form>
