@@ -210,7 +210,7 @@ const toRad = deg => deg * Math.PI / 180;
 
     if (stores?.length) {
       const myStore = stores[0];
-      renderStore(myStore);         // inject marker if not already shown
+      addStoreToMap(myStore);         // inject marker if not already shown
       viewMenu(myStore.id, myStore.name); // auto-show menu panel
     }
   }
