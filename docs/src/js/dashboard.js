@@ -189,9 +189,11 @@ document.getElementById('uploadForm')?.addEventListener('submit', async (e) => {
 
   if (insertError) alert("❌ Dish insert failed: " + insertError.message);
   else {
-    alert("✅ Dish uploaded!");
-    viewMenu(store_id); // 🔁 Optionally refresh menu
-  }
+  alert("✅ Dish uploaded!");
+  const select = document.getElementById('storeSelect');
+  const storeName = select.options[select.selectedIndex].textContent;
+  viewMenu(store_id, storeName);
+}
 });
 
 // 🧑‍🍳 View Menu
