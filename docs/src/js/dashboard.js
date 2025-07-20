@@ -184,15 +184,14 @@ document.getElementById('uploadForm')?.addEventListener('submit', async (e) => {
     price: parseFloat(form.get('price')),
     image_url: imageUrl,
     uploader_id: userId,
-    store_id
+   store_id: userStoreId
   }]);
-
-  if (insertError) alert("❌ Dish insert failed: " + insertError.message);
-  else {
-  alert("✅ Dish uploaded!");
-  const select = document.getElementById('storeSelect');
-  const storeName = select.options[select.selectedIndex].textContent;
-  viewMenu(store_id, storeName);
+.select();
+ if (insertError) {
+  alert("❌ Dish insert failed: " + insertError.message);
+} else {
+ else {
+  console.log("✅ Dish inserted:", insertResult);
 }
 });
 
