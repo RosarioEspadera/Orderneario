@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js';
+import emailjs from 'https://cdn.skypack.dev/@emailjs/browser';
 
 // 📦 Init services
 const supabase = createClient(
