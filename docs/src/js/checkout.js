@@ -131,24 +131,34 @@ checkoutForm.addEventListener('submit', async (e) => {
         .eq('id', store.owner_id)
         .single();
       const storeEmail = owner?.email;
-      if (!storeEmail) {
-        console.warn("Store owner email missing for store ID:", food.store_id);
-        continue;
-      }
+      const ownerId = store.owner_id;
+      if (!storeEmail) continue;
 
+      const key = `${ownerId}|${storeEmail}`;
       const line = `• ${food.name}`;
-      if (!grouped.has(storeEmail)) grouped.set(storeEmail, []);
-      grouped.get(storeEmail).push(line);
+
+      if (!grouped.has(key)) grouped.set(key, []);
+      grouped.get(key).push(line);
     }
 
-    // 💌 Send receipts to store owners
     await Promise.all(
-      Array.from(grouped.entries()).map(([storeEmail, dishes]) =>
-        emailjs.send('service_epydqmi', 'template_6d3ltu9', {
+      Array.from(grouped.entries()).map(async ([key, dishes]) => {
+        const [ownerId, storeEmail] = key.split('|');
+
+        // Send to owner's email
+        await emailjs.send('service_epydqmi', 'template_6d3ltu9', {
           to_email: storeEmail,
           message: `📦 New order:\n\n${dishes.join('\n')}\n\nTotal: ₱${total.toFixed(2)}\nDate: ${timestamp}\nFrom: ${buyerName || 'Unnamed'} (${buyerEmail})\n📍 ${buyerAddress || 'No address provided'}\n🗺️ ${mapLink}`
-        })
-      )
+        });
+
+        // Insert chat notification
+        await supabase
+          .from('notifications')
+          .insert({
+            recipient_id: ownerId,
+            message: `🧾 New order from ${buyerName || 'Unnamed'}:\n${dishes.join('\n')}\nTotal: ₱${total.toFixed(2)}`
+          });
+      })
     );
 
     // ✅ Mark orders as confirmed
@@ -158,9 +168,9 @@ checkoutForm.addEventListener('submit', async (e) => {
       .eq('user_id', currentUser.id)
       .eq('status', 'pending');
 
-    alert('✅ Receipts sent to buyer and store owner!');
+    alert('✅ Receipts sent and store owners notified!');
   } catch (err) {
-    console.error("Receipt send failed:", err);
+    console.error("❌ Receipt send failed:", err);
     alert('❌ Failed to send receipt(s). Please try again.');
   }
 });
