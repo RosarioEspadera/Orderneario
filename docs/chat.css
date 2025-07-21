@@ -55,3 +55,15 @@ button.mark-read:hover {
   margin-bottom: 12px;
   border-radius: 6px;
 }
+@media (max-width: 600px) {
+  #notificationList li,
+  #orderList li {
+    font-size: 0.9em;
+    padding: 10px;
+  }
+
+  button.mark-read {
+    width: 100%;
+    margin-top: 8px;
+  }
+}
