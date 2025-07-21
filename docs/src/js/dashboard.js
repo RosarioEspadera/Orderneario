@@ -179,7 +179,7 @@ document.getElementById('uploadForm')?.addEventListener('submit', async (e) => {
   const imageUrl = `${SUPABASE_URL}/storage/v1/object/public/dish-images/${uploadData.path}`;
   const store_id = userStoreId;
 
-  const { error: insertError } = await supabase.from('foods').insert([{
+  const { data: insertResult, error: insertError } = await supabase.from('foods').insert([{
     name: form.get('name'),
     description: form.get('description'),
     price: parseFloat(form.get('price')),
