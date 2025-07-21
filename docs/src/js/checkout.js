@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js';
+import { sendReceipt } from './emailSender.js';
 
 // 🔐 Supabase & EmailJS Setup
 const supabase = createClient(
