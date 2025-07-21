@@ -1,0 +1,70 @@
+/* 🌍 Map container */
+#map {
+  height: 500px;
+  width: 100%;
+  border-radius: 8px;
+  border: 2px solid #ccc;
+  margin-bottom: 20px;
+}
+
+/* 🍽️ Menu Panel */
+#menuPanel {
+  background: #fff;
+  border: 1px solid #ddd;
+  padding: 20px;
+  border-radius: 8px;
+  max-width: 600px;
+  margin: 0 auto 30px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+}
+
+#menuTitle {
+  margin-top: 0;
+  font-size: 1.4em;
+  color: #007bff;
+}
+
+/* 🍲 Dish list */
+#menuList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+#menuList li {
+  margin-bottom: 20px;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 15px;
+}
+
+#menuList img {
+  display: block;
+  border-radius: 6px;
+  margin-bottom: 10px;
+}
+
+/* 🛒 Buttons */
+.orderBtn {
+  background-color: #28a745;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.orderBtn:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+/* ✏️ Edit buttons (for owners) */
+button.editDishBtn {
+  background-color: #ffc107;
+  color: #333;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  margin-top: 10px;
+  cursor: pointer;
+}
