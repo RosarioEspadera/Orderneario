@@ -1,0 +1,57 @@
+/* 📝 Role info banner */
+#roleInfo {
+  font-weight: bold;
+  margin-bottom: 20px;
+  color: #007bff;
+}
+
+/* 🔔 Notification List */
+#notificationList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+#notificationList li {
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-left: 4px solid #007bff;
+  padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 12px;
+  transition: border-color 0.3s ease;
+}
+
+#notificationList li.read {
+  border-left-color: #ccc;
+}
+
+/* 👁️ Mark as read button */
+button.mark-read {
+  margin-top: 6px;
+  background-color: #6c757d;
+  color: white;
+  padding: 6px 10px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+button.mark-read:hover {
+  background-color: #495057;
+}
+
+/* 📦 Order feed list */
+#orderList {
+  list-style: none;
+  padding: 0;
+  margin-top: 30px;
+}
+
+#orderList li {
+  background-color: #f9f9f9;
+  border: 1px solid #ddd;
+  padding: 10px;
+  margin-bottom: 12px;
+  border-radius: 6px;
+}
