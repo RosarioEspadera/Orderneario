@@ -17,6 +17,34 @@ const toast = document.getElementById('toast');
 const userEmailInput = document.getElementById('userEmail');
 const userNameInput = document.getElementById('userName');
 const userAddressInput = document.getElementById('userAddress');
+const locateBtn = document.getElementById('locateBtn');
+
+locateBtn.addEventListener('click', () => {
+  if (!navigator.geolocation) {
+    showToast("❌ Geolocation not supported", false);
+    return;
+  }
+
+  locateBtn.disabled = true;
+  locateBtn.textContent = "📍 Locating...";
+
+  navigator.geolocation.getCurrentPosition(
+    ({ coords }) => {
+      const lat = coords.latitude.toFixed(6);
+      const lng = coords.longitude.toFixed(6);
+      userAddressInput.value = `${lat}, ${lng}`;
+      showToast("✅ Location detected");
+      locateBtn.textContent = "📍 Detect My Location";
+      locateBtn.disabled = false;
+    },
+    (err) => {
+      console.warn("📵 Location error:", err.message);
+      showToast(`❌ ${err.message}`, false);
+      locateBtn.textContent = "📍 Detect My Location";
+      locateBtn.disabled = false;
+    }
+  );
+});
 
 let orderSummary = [], summary = "", total = 0;
 
