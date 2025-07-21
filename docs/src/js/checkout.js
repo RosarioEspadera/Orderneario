@@ -1,12 +1,17 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js';
 const supabase = createClient(
   'https://neigxicrhalonnsaqkud.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5laWd4aWNyaGFsb25uc2Fxa3VkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI4NDQ3NjcsImV4cCI6MjA2ODQyMDc2N30.43DDOz-38NSc0nUejfTGOMD4xYBfzNvy4n0NFZWEfeo' // Replace with your actual key
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5laWd4aWNyaGFsb25uc2Fxa3VkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI4NDQ3NjcsImV4cCI6MjA2ODQyMDc2N30.43DDOz-38NSc0nUejfTGOMD4xYBfzNvy4n0NFZWEfeo'
 );
 
+emailjs.init("AqvkFhQnxowOJda9J"); // ✅ Your EmailJS public key
+
+// DOM elements
 const checkoutForm = document.getElementById('checkoutForm');
 const orderList = document.getElementById('orderList');
 const totalEl = document.getElementById('total');
+const receiptPreview = document.getElementById('receiptPreview');
+const toast = document.getElementById('toast');
 const userEmailInput = document.getElementById('userEmail');
 const userNameInput = document.getElementById('userName');
 const userAddressInput = document.getElementById('userAddress');
@@ -14,51 +19,56 @@ const userAddressInput = document.getElementById('userAddress');
 // 📍 Autofill location
 navigator.geolocation.getCurrentPosition(
   ({ coords }) => {
-    const geoLink = `https://www.google.com/maps/search/?q=${coords.latitude},${coords.longitude}`;
     userAddressInput.value = `${coords.latitude}, ${coords.longitude}`;
-    console.log("🗺️ Auto-detected address:", geoLink);
   },
-  err => console.warn("📵 Location access denied:", err.message)
+  err => console.warn("Location access denied:", err.message)
 );
 
 // 🔐 Auth check
 const { data: authData } = await supabase.auth.getUser();
 const currentUser = authData?.user;
 if (!currentUser) {
-  alert("🔒 You must be logged in to view checkout.");
+  showToast("🔒 Not logged in.", false);
   location.href = 'profile.html';
 }
 
-// 🧾 Globals
-let total = 0;
-let orderSummary = [];
-let summary = "";
+// 🔄 Global vars
+let orderSummary = [], summary = "", total = 0;
 
-// 🧩 Render orders
+// 🍭 Toast function
+function showToast(message, success = true) {
+  toast.textContent = message;
+  toast.style.background = success ? "#28a745" : "#dc3545";
+  toast.style.opacity = "1";
+  setTimeout(() => toast.style.opacity = "0", 3000);
+}
+
+// 🔁 Render order list
 async function renderOrders() {
+  orderSummary = [];
+  total = 0;
+
   const { data: orders, error } = await supabase
     .from('orders')
     .select('id, status, foods(name, price)')
     .eq('user_id', currentUser.id)
     .in('status', ['pending', 'confirmed']);
 
+  orderList.innerHTML = '';
+
   if (error || !orders?.length) {
-    console.warn('No orders found or fetch failed:', error?.message);
     orderList.innerHTML = '<li>No recent orders found.</li>';
     totalEl.textContent = '0.00';
+    receiptPreview.textContent = '';
     return;
   }
 
-  orderList.innerHTML = '';
-  orderSummary = [];
-  total = 0;
-
   orders.forEach(order => {
     const dish = order.foods;
-    const statusLabel = order.status === 'confirmed' ? '✅ Confirmed' : '🕒 Pending';
+    const label = order.status === 'confirmed' ? '✅ Confirmed' : '🕒 Pending';
     const li = document.createElement('li');
     li.innerHTML = `
-      ${dish.name} – ₱${dish.price} ${statusLabel}
+      ${dish.name} – ₱${dish.price} ${label}
       <button data-id="${order.id}" class="delete-btn">🗑️ Delete</button>
     `;
     orderList.appendChild(li);
@@ -68,25 +78,25 @@ async function renderOrders() {
 
   summary = orderSummary.join('\n');
   totalEl.textContent = total.toFixed(2);
+  receiptPreview.textContent = `${summary}\n\nTotal: ₱${total.toFixed(2)}`;
 
   document.querySelectorAll('.delete-btn').forEach(btn => {
     btn.addEventListener('click', async () => {
-      const orderId = btn.dataset.id;
-      const confirmDelete = confirm("Remove this item from your order?");
-      if (!confirmDelete) return;
+      const id = btn.dataset.id;
+      if (!confirm("Remove this item?")) return;
 
       const { error } = await supabase
         .from('orders')
         .delete()
-        .eq('id', orderId);
+        .eq('id', id);
 
       if (error) {
-        console.error('❌ Delete failed:', error.message);
-        alert("Couldn't delete the item.");
+        showToast("❌ Couldn't delete item.", false);
         return;
       }
 
-      renderOrders(); // re-render after delete
+      showToast("✅ Item deleted.");
+      await renderOrders();
     });
   });
 }
@@ -94,7 +104,7 @@ async function renderOrders() {
 await renderOrders();
 
 
-// 📨 Form submission
+// 🧾 Submit order
 checkoutForm.addEventListener('submit', async (e) => {
   e.preventDefault();
 
@@ -105,19 +115,16 @@ checkoutForm.addEventListener('submit', async (e) => {
   const mapLink = `https://www.google.com/maps/search/?q=${encodeURIComponent(buyerAddress)}`;
 
   if (!buyerEmail) {
-    alert("📬 Email is required.");
+    showToast("📬 Email is required.", false);
     return;
   }
 
   try {
-    // 💌 Send buyer receipt
-    const buyerMessage = `🧾 Your order:\n\n${summary}\n\nTotal: ₱${total.toFixed(2)}\nDate: ${timestamp}\n📍 ${buyerAddress}\n🗺️ ${mapLink}`;
     await emailjs.send('service_epydqmi', 'template_6d3ltu9', {
       to_email: buyerEmail,
-      message: buyerMessage
+      message: `🧾 Your order:\n\n${summary}\n\nTotal: ₱${total.toFixed(2)}\nDate: ${timestamp}\n📍 ${buyerAddress}\n🗺️ ${mapLink}`
     });
 
-    // 🧾 Fetch pending orders
     const { data: pendingOrders } = await supabase
       .from('orders')
       .select('food_id')
@@ -139,18 +146,16 @@ checkoutForm.addEventListener('submit', async (e) => {
         .select('owner_id')
         .eq('id', food.store_id)
         .single();
-      if (!store || !store.owner_id) continue;
+      if (!store?.owner_id) continue;
 
       const { data: owner } = await supabase
         .from('profiles')
         .select('email')
         .eq('id', store.owner_id)
         .single();
-      const storeEmail = owner?.email;
-      const ownerId = store.owner_id;
-      if (!storeEmail) continue;
+      if (!owner?.email) continue;
 
-      const key = `${ownerId}|${storeEmail}`;
+      const key = `${store.owner_id}|${owner.email}`;
       const line = `• ${food.name}`;
       if (!grouped.has(key)) grouped.set(key, []);
       grouped.get(key).push(line);
@@ -162,14 +167,15 @@ checkoutForm.addEventListener('submit', async (e) => {
 
         await emailjs.send('service_epydqmi', 'template_6d3ltu9', {
           to_email: storeEmail,
-          message: `📦 New order:\n\n${dishes.join('\n')}\n\nTotal: ₱${total.toFixed(2)}\nDate: ${timestamp}\nFrom: ${buyerName || 'Unnamed'} (${buyerEmail})\n📍 ${buyerAddress || 'No address provided'}\n🗺️ ${mapLink}`
+          message: `📦 New order:\n\n${dishes.join('\n')}\n\nTotal: ₱${total.toFixed(2)}\nDate: ${timestamp}\nFrom: ${buyerName || 'Unnamed'} (${buyerEmail})\n📍 ${buyerAddress}\n🗺️ ${mapLink}`
         });
 
         await supabase
           .from('notifications')
           .insert({
             recipient_id: ownerId,
-            message: `🧾 New order from ${buyerName || 'Unnamed'}:\n${dishes.join('\n')}\nTotal: ₱${total.toFixed(2)}`
+            message: `🧾 Order from ${buyerName || 'Unnamed'}:\n${dishes.join('\n')}\nTotal: ₱${total.toFixed(2)}`,
+            read: false
           });
       })
     );
@@ -180,10 +186,10 @@ checkoutForm.addEventListener('submit', async (e) => {
       .eq('user_id', currentUser.id)
       .eq('status', 'pending');
 
-    alert('✅ Receipts sent and store owners notified!');
-    renderOrders(); // refresh confirmed view
+    showToast("✅ Order placed and notifications sent.");
+    await renderOrders();
   } catch (err) {
-    console.error("❌ Receipt send failed:", err);
-    alert('❌ Failed to send receipt(s). Please try again.');
+    console.error("Receipt send failed:", err);
+    showToast("❌ Failed to send receipt(s).", false);
   }
 });
