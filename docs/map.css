@@ -68,3 +68,23 @@ button.editDishBtn {
   margin-top: 10px;
   cursor: pointer;
 }
+@media (max-width: 600px) {
+  #map {
+    height: 350px;
+    width: 100%;
+  }
+
+  #menuPanel {
+    padding: 15px;
+  }
+
+  #menuList li {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .orderBtn, .editDishBtn {
+    width: 100%;
+    margin-top: 8px;
+  }
+}
