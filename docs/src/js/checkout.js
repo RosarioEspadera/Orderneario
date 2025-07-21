@@ -47,11 +47,37 @@ orders?.forEach(order => {
   const dish = order.foods;
   const statusLabel = order.status === 'confirmed' ? '✅ Confirmed' : '🕒 Pending';
   const li = document.createElement('li');
-  li.textContent = `${dish.name} – ₱${dish.price} ${statusLabel}`;
+  li.innerHTML = `
+    ${dish.name} – ₱${dish.price} ${statusLabel}
+    <button data-id="${order.id}" class="delete-btn">🗑️ Delete</button>
+  `;
   orderList.appendChild(li);
   total += dish.price;
   orderSummary.push(`• ${dish.name} – ₱${dish.price}`);
 });
+
+document.querySelectorAll('.delete-btn').forEach(btn => {
+  btn.addEventListener('click', async () => {
+    const orderId = btn.getAttribute('data-id');
+    const confirmDelete = confirm("Remove this item from your order?");
+    if (!confirmDelete) return;
+
+    const { error } = await supabase
+      .from('orders')
+      .delete()
+      .eq('id', orderId);
+
+    if (error) {
+      console.error('❌ Delete failed:', error.message);
+      alert("Oops! Couldn’t delete the item.");
+      return;
+    }
+
+    // 🔃 Re-render updated order list
+    location.reload(); // Or manually re-fetch and re-render
+  });
+});
+
 
 totalEl.textContent = total.toFixed(2);
 const summary = orderSummary.join('\n');
