@@ -68,3 +68,13 @@
   color: #28a745;
   font-weight: bold;
 }
+@media (max-width: 600px) {
+  #profileContainer {
+    padding: 20px;
+    margin: 20px auto;
+  }
+
+  #authForm button {
+    width: 100%;
+  }
+}
