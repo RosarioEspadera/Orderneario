@@ -93,3 +93,15 @@ button.cancel-btn {
   border-radius: 6px;
   cursor: pointer;
 }
+@media (max-width: 600px) {
+  .edit-panel input,
+  .edit-panel textarea {
+    font-size: 1em;
+    padding: 10px;
+  }
+
+  .edit-panel button {
+    width: 100%;
+    margin-top: 10px;
+  }
+}
