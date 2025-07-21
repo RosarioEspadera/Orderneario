@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>💬 Live Orders | Orderneario</title>
+  <title>💬 Alerts | Orderneario</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -15,145 +15,124 @@
       <a href="profile.html">👤 Profile</a>
       <a href="chat.html">💬 Alerts</a>
     </nav>
-    <h1>💬 Live Orders</h1>
-    <p id="roleInfo">Loading...</p>
+    <h1>💬 Alerts & Orders</h1>
+    <p id="roleInfo">Checking login...</p>
   </header>
 
   <main>
-    <ul id="feedList"></ul>
+    <section>
+      <h2>🔔 Notifications</h2>
+      <ul id="notificationList">Loading...</ul>
+    </section>
+
+    <section>
+      <h2>📦 Live Orders</h2>
+      <ul id="orderList">Loading...</ul>
+    </section>
   </main>
 
   <script type="module">
     import { createClient } from 'https://esm.sh/@supabase/supabase-js';
-
     const supabase = createClient(
       'https://neigxicrhalonnsaqkud.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5laWd4aWNyaGFsb25uc2Fxa3VkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI4NDQ3NjcsImV4cCI6MjA2ODQyMDc2N30.43DDOz-38NSc0nUejfTGOMD4xYBfzNvy4n0NFZWEfeo' // 🔐 Replace with your real anon key
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5laWd4aWNyaGFsb25uc2Fxa3VkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI4NDQ3NjcsImV4cCI6MjA2ODQyMDc2N30.43DDOz-38NSc0nUejfTGOMD4xYBfzNvy4n0NFZWEfeo'
     );
 
-    const feedList = document.getElementById('feedList');
     const roleInfo = document.getElementById('roleInfo');
+    const notificationList = document.getElementById('notificationList');
+    const orderList = document.getElementById('orderList');
 
-    (async () => {
-      const { data: authData } = await supabase.auth.getUser();
-      const currentUser = authData?.user;
+    const { data: authData } = await supabase.auth.getUser();
+    const currentUser = authData?.user;
 
-      if (!currentUser) {
-        roleInfo.textContent = '🔒 Please sign in';
-        return;
+    if (!currentUser) {
+      roleInfo.textContent = '🔒 Please sign in first.';
+      return;
+    }
+
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', currentUser.id)
+      .single();
+
+    if (profileError || !profile) {
+      roleInfo.textContent = '⚠️ Cannot retrieve user role.';
+      return;
+    }
+
+    const role = profile.role;
+    roleInfo.textContent = `Signed in as ${currentUser.email} (${role})`;
+
+    // 📨 Notifications from consumers
+    const { data: notes, error: notesError } = await supabase
+      .from('notifications')
+      .select('message, created_at')
+      .eq('recipient_id', currentUser.id)
+      .order('created_at', { ascending: false });
+
+    if (notesError || !notes.length) {
+      notificationList.innerHTML = '<li>No recent alerts.</li>';
+    } else {
+      notificationList.innerHTML = notes
+        .map(n => `<li>${n.message}<br><small>${new Date(n.created_at).toLocaleString()}</small></li>`)
+        .join('');
+    }
+
+    // 🔁 Realtime notifications
+    supabase
+      .channel('owner-notifications')
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'notifications',
+        filter: `recipient_id=eq.${currentUser.id}`
+      }, payload => {
+        const note = payload.new;
+        const li = document.createElement('li');
+        li.innerHTML = `${note.message}<br><small>${new Date(note.created_at).toLocaleString()}</small>`;
+        notificationList.prepend(li);
+        new Audio('/assets/ding.mp3').play();
+      })
+      .subscribe();
+
+    // 🧾 Live Order Feed (past 10 mins)
+    if (role === 'store_owner') {
+      const recentCutoff = new Date(Date.now() - 10 * 60000).toISOString();
+
+      const { data: recentOrders } = await supabase
+        .from('orders')
+        .select('timestamp, food_id, user_id')
+        .gt('timestamp', recentCutoff);
+
+      for (const order of recentOrders ?? []) {
+        const { data: dish } = await supabase
+          .from('foods')
+          .select('name, store_id')
+          .eq('id', order.food_id)
+          .single();
+        if (!dish) continue;
+
+        const { data: store } = await supabase
+          .from('stores')
+          .select('owner_id')
+          .eq('id', dish.store_id)
+          .single();
+        if (!store || store.owner_id !== currentUser.id) continue;
+
+        const { data: buyer } = await supabase
+          .from('profiles')
+          .select('name, email, address')
+          .eq('id', order.user_id)
+          .single();
+        const time = new Date(order.timestamp).toLocaleTimeString();
+
+        const msg = `📦 ${dish.name} ordered by ${buyer?.name ?? 'Unnamed'} (${buyer?.email ?? 'No email'})<br>📍 ${buyer?.address ?? 'No address'} @ ${time}`;
+        const li = document.createElement('li');
+        li.innerHTML = msg;
+        orderList.appendChild(li);
       }
-
-      // 🔍 Get user role
-      const { data: profile, error: roleError } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', currentUser.id)
-        .single();
-
-      if (roleError || !profile) {
-        roleInfo.textContent = '⚠️ Unable to load role';
-        console.error('Role fetch error:', roleError?.message);
-        return;
-      }
-
-      const role = profile.role;
-      roleInfo.textContent = `Signed in as ${currentUser.email} (${role})`;
-
-      if (role === 'consumer') {
-        // 🧾 Show recent orders
-        const { data: orders } = await supabase
-          .from('orders')
-          .select('timestamp, status, foods(name)')
-          .eq('user_id', currentUser.id)
-          .order('timestamp', { ascending: false });
-
-        orders?.forEach(order => {
-          const time = new Date(order.timestamp).toLocaleTimeString();
-          const msg = `🧾 You ordered ${order.foods.name} — ${order.status} @ ${time}`;
-          const li = document.createElement('li');
-          li.textContent = msg;
-          feedList.appendChild(li);
-        });
-      }
-
-      if (role === 'store_owner') {
-        // 🛎️ Fallback fetch (last 10 minutes)
-        const recentCutoff = new Date(Date.now() - 10 * 60000).toISOString();
-
-        const { data: recentOrders } = await supabase
-          .from('orders')
-          .select('timestamp, food_id, user_id')
-          .gt('timestamp', recentCutoff);
-
-        for (const order of recentOrders ?? []) {
-          const { data: dish } = await supabase
-            .from('foods')
-            .select('name, store_id')
-            .eq('id', order.food_id)
-            .single();
-          if (!dish) continue;
-
-          const { data: store } = await supabase
-            .from('stores')
-            .select('owner_id')
-            .eq('id', dish.store_id)
-            .single();
-          if (!store || store.owner_id !== currentUser.id) continue;
-
-          const { data: buyer } = await supabase
-            .from('profiles')
-            .select('name, email, address')
-            .eq('id', order.user_id)
-            .single();
-
-          const time = new Date(order.timestamp).toLocaleTimeString();
-          const msg = `📦 ${dish.name} was ordered by ${buyer?.name ?? 'Unnamed'} (${buyer?.email ?? 'No email'})\n📍 ${buyer?.address ?? 'No address'} @ ${time}`;
-          const li = document.createElement('li');
-          li.textContent = msg;
-          feedList.appendChild(li);
-        }
-
-        // 🔔 Live alerts
-        supabase
-          .channel('order-alerts')
-          .on('postgres_changes', {
-            event: 'INSERT',
-            schema: 'public',
-            table: 'orders'
-          }, async ({ new: order }) => {
-            console.log("✅ Realtime trigger:", order);
-
-            const { data: dish, error: dishError } = await supabase
-              .from('foods')
-              .select('name, store_id')
-              .eq('id', order.food_id)
-              .single();
-            if (!dish) return;
-
-            const { data: store, error: storeError } = await supabase
-              .from('stores')
-              .select('owner_id')
-              .eq('id', dish.store_id)
-              .single();
-            if (!store || store.owner_id !== currentUser.id) return;
-
-            const { data: buyer } = await supabase
-              .from('profiles')
-              .select('name, email, address')
-              .eq('id', order.user_id)
-              .single();
-
-            const time = new Date(order.timestamp).toLocaleTimeString();
-            const msg = `📦 ${dish.name} was ordered by ${buyer?.name ?? 'Unnamed'} (${buyer?.email ?? 'No email'})\n📍 ${buyer?.address ?? 'No address'} @ ${time}`;
-            const li = document.createElement('li');
-            li.textContent = msg;
-            feedList.prepend(li);
-
-            new Audio('/assets/ding.mp3').play(); // Make sure this file exists
-          })
-          .subscribe();
-      }
-    })();
+    }
   </script>
 </body>
 </html>
