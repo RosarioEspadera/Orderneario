@@ -2,49 +2,80 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Order Checkout</title>
+  <title>🧾 Checkout | Orderneario</title>
   <link rel="stylesheet" href="style.css" />
-  <link rel="icon" href="favicon.ico" />
+  <style>
+    #toast {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      background: #333;
+      color: #fff;
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-size: 0.9em;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    #orderList li {
+      margin-bottom: 0.5em;
+    }
+
+    #receiptPreview {
+      white-space: pre-wrap;
+      border: 1px solid #ccc;
+      padding: 1em;
+      background: #f9f9f9;
+      margin-top: 1em;
+    }
+  </style>
 </head>
 <body>
-  <nav class="tab-nav">
-    <a href="homepage.html">🏠 Home</a>
-    <a href="dashboard.html">📋 Dashboard</a>
-    <a href="map.html">🗺️ Map</a>
-    <a href="checkout.html">🧾 Checkout</a>
-    <a href="profile.html">👤 Profile</a>
-    <a href="chat.html">💬 Alerts</a>
-  </nav>
+  <header>
+    <nav class="tab-nav">
+      <a href="homepage.html">🏠 Home</a>
+      <a href="dashboard.html">📋 Dashboard</a>
+      <a href="map.html">🗺️ Map</a>
+      <a href="checkout.html">🧾 Checkout</a>
+      <a href="profile.html">👤 Profile</a>
+      <a href="chat.html">💬 Alerts</a>
+    </nav>
+    <h1>🧾 Checkout</h1>
+  </header>
 
   <main>
-    <h1>🧾 Your Orders</h1>
-    <ul id="orderList"></ul>
-    <p><strong>Total:</strong> ₱<span id="total">0.00</span></p>
-    <pre id="receiptPreview"></pre>
+    <section>
+      <h2>🛒 Your Order</h2>
+      <ul id="orderList">Loading...</ul>
+      <p>Total: ₱<span id="total">0.00</span></p>
+    </section>
 
-    <form id="checkoutForm">
-      <h2>✅ Confirm Your Info</h2>
+    <section>
+      <h2>🧾 Receipt Preview</h2>
+      <pre id="receiptPreview">Nothing to show yet.</pre>
+    </section>
 
-      <label for="userEmail">Email <span style="color: red">*</span></label>
-      <input type="email" id="userEmail" required />
+    <section>
+      <h2>📬 Confirm Your Info</h2>
+      <form id="checkoutForm">
+        <label for="userEmail">Email:</label>
+        <input type="email" id="userEmail" placeholder="you@example.com" required />
 
-      <label for="userName">Full Name</label>
-      <input type="text" id="userName" placeholder="Optional" />
+        <label for="userName">Name:</label>
+        <input type="text" id="userName" placeholder="Your name" required />
 
-     <label for="userAddress">Address</label>
-<textarea id="userAddress" rows="2" placeholder="Optional"></textarea>
-<button type="button" id="locateBtn">📍 Use My Location</button>
+        <label for="userAddress">Address:</label>
+        <input type="text" id="userAddress" placeholder="Pickup or delivery location" required />
 
-
-      <button type="submit">🛒 Place Order</button>
-    </form>
+        <button type="submit">✅ Place Order</button>
+      </form>
+    </section>
   </main>
-<!-- EmailJS SDK -->
-<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
-<script>
-  emailjs.init("AqvkFhQnxowOJda9J"); // your public key
-</script>
+
+  <div id="toast"></div>
   <script type="module" src="src/js/checkout.js"></script>
 </body>
 </html>
