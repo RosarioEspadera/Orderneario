@@ -89,3 +89,16 @@
   transition: opacity 0.3s ease-in-out;
   z-index: 999;
 }
+@media (max-width: 600px) {
+  #checkoutForm input,
+  #checkoutForm button,
+  #locateBtn {
+    width: 100%;
+    font-size: 1em;
+  }
+
+  #receiptPreview {
+    font-size: 0.95em;
+    padding: 12px;
+  }
+}
