@@ -1,5 +1,8 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js';
-const supabase = createClient('https://neigxicrhalonnsaqkud.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5laWd4aWNyaGFsb25uc2Fxa3VkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI4NDQ3NjcsImV4cCI6MjA2ODQyMDc2N30.43DDOz-38NSc0nUejfTGOMD4xYBfzNvy4n0NFZWEfeo'); // Replace with your actual anon key
+const supabase = createClient(
+  'https://neigxicrhalonnsaqkud.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5laWd4aWNyaGFsb25uc2Fxa3VkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI4NDQ3NjcsImV4cCI6MjA2ODQyMDc2N30.43DDOz-38NSc0nUejfTGOMD4xYBfzNvy4n0NFZWEfeo' // Replace with your actual key
+);
 
 const checkoutForm = document.getElementById('checkoutForm');
 const orderList = document.getElementById('orderList');
@@ -8,18 +11,17 @@ const userEmailInput = document.getElementById('userEmail');
 const userNameInput = document.getElementById('userName');
 const userAddressInput = document.getElementById('userAddress');
 
-navigator.geolocation.getCurrentPosition((position) => {
-  const { latitude, longitude } = position.coords;
-  const geoLink = `https://www.google.com/maps/search/?q=${latitude},${longitude}`;
-  userAddressInput.value = `${latitude}, ${longitude}`;
-  console.log("🗺️ Auto-detected address:", geoLink);
-}, (error) => {
-  console.warn("📵 Location access denied:", error.message);
-});
+// 📍 Autofill location
+navigator.geolocation.getCurrentPosition(
+  ({ coords }) => {
+    const geoLink = `https://www.google.com/maps/search/?q=${coords.latitude},${coords.longitude}`;
+    userAddressInput.value = `${coords.latitude}, ${coords.longitude}`;
+    console.log("🗺️ Auto-detected address:", geoLink);
+  },
+  err => console.warn("📵 Location access denied:", err.message)
+);
 
-
-let orderSummary = [];
-
+// 🔐 Auth check
 const { data: authData } = await supabase.auth.getUser();
 const currentUser = authData?.user;
 if (!currentUser) {
@@ -27,56 +29,70 @@ if (!currentUser) {
   location.href = 'profile.html';
 }
 
-// 🧾 Load orders for the current user (pending + confirmed)
-const { data: orders, error: ordersError } = await supabase
-  .from('orders')
-  .select('id, status, foods(name, price)')
-  .eq('user_id', currentUser.id)
-  .in('status', ['pending', 'confirmed']);
+// 🧾 Globals
+let total = 0;
+let orderSummary = [];
+let summary = "";
 
-if (ordersError || !orders?.length) {
-  console.warn('No orders found or fetch failed:', ordersError?.message);
-  orderList.innerHTML = '<li>No recent orders found.</li>';
+// 🧩 Render orders
+async function renderOrders() {
+  const { data: orders, error } = await supabase
+    .from('orders')
+    .select('id, status, foods(name, price)')
+    .eq('user_id', currentUser.id)
+    .in('status', ['pending', 'confirmed']);
+
+  if (error || !orders?.length) {
+    console.warn('No orders found or fetch failed:', error?.message);
+    orderList.innerHTML = '<li>No recent orders found.</li>';
+    totalEl.textContent = '0.00';
+    return;
+  }
+
+  orderList.innerHTML = '';
+  orderSummary = [];
+  total = 0;
+
+  orders.forEach(order => {
+    const dish = order.foods;
+    const statusLabel = order.status === 'confirmed' ? '✅ Confirmed' : '🕒 Pending';
+    const li = document.createElement('li');
+    li.innerHTML = `
+      ${dish.name} – ₱${dish.price} ${statusLabel}
+      <button data-id="${order.id}" class="delete-btn">🗑️ Delete</button>
+    `;
+    orderList.appendChild(li);
+    total += dish.price;
+    orderSummary.push(`• ${dish.name} – ₱${dish.price}`);
+  });
+
+  summary = orderSummary.join('\n');
+  totalEl.textContent = total.toFixed(2);
+
+  document.querySelectorAll('.delete-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const orderId = btn.dataset.id;
+      const confirmDelete = confirm("Remove this item from your order?");
+      if (!confirmDelete) return;
+
+      const { error } = await supabase
+        .from('orders')
+        .delete()
+        .eq('id', orderId);
+
+      if (error) {
+        console.error('❌ Delete failed:', error.message);
+        alert("Couldn't delete the item.");
+        return;
+      }
+
+      renderOrders(); // re-render after delete
+    });
+  });
 }
 
-let total = 0;
-orderList.innerHTML = '';
-orderSummary.length = 0;
+await renderOrders();
 
-orders?.forEach(order => {
-  const dish = order.foods;
-  const statusLabel = order.status === 'confirmed' ? '✅ Confirmed' : '🕒 Pending';
-  const li = document.createElement('li');
-  li.innerHTML = `
-    ${dish.name} – ₱${dish.price} ${statusLabel}
-    <button data-id="${order.id}" class="delete-btn">🗑️ Delete</button>
-  `;
-  orderList.appendChild(li);
-  total += dish.price;
-  orderSummary.push(`• ${dish.name} – ₱${dish.price}`);
-});
-
-document.querySelectorAll('.delete-btn').forEach(btn => {
-  btn.addEventListener('click', async () => {
-    const orderId = btn.getAttribute('data-id');
-    const confirmDelete = confirm("Remove this item from your order?");
-    if (!confirmDelete) return;
-
-    const { error } = await supabase
-      .from('orders')
-      .delete()
-      .eq('id', orderId);
-
-    if (error) {
-      console.error('❌ Delete failed:', error.message);
-      alert("Oops! Couldn’t delete the item.");
-      return;
-    }
-
-    // 🔃 Re-render updated order list
-    location.reload(); // Or manually re-fetch and re-render
-  });
-});
 
 // 📨 Form submission
 checkoutForm.addEventListener('submit', async (e) => {
@@ -101,7 +117,7 @@ checkoutForm.addEventListener('submit', async (e) => {
       message: buyerMessage
     });
 
-    // 📬 Fetch pending orders again for seller receipts
+    // 🧾 Fetch pending orders
     const { data: pendingOrders } = await supabase
       .from('orders')
       .select('food_id')
@@ -136,7 +152,6 @@ checkoutForm.addEventListener('submit', async (e) => {
 
       const key = `${ownerId}|${storeEmail}`;
       const line = `• ${food.name}`;
-
       if (!grouped.has(key)) grouped.set(key, []);
       grouped.get(key).push(line);
     }
@@ -145,13 +160,11 @@ checkoutForm.addEventListener('submit', async (e) => {
       Array.from(grouped.entries()).map(async ([key, dishes]) => {
         const [ownerId, storeEmail] = key.split('|');
 
-        // Send to owner's email
         await emailjs.send('service_epydqmi', 'template_6d3ltu9', {
           to_email: storeEmail,
           message: `📦 New order:\n\n${dishes.join('\n')}\n\nTotal: ₱${total.toFixed(2)}\nDate: ${timestamp}\nFrom: ${buyerName || 'Unnamed'} (${buyerEmail})\n📍 ${buyerAddress || 'No address provided'}\n🗺️ ${mapLink}`
         });
 
-        // Insert chat notification
         await supabase
           .from('notifications')
           .insert({
@@ -161,7 +174,6 @@ checkoutForm.addEventListener('submit', async (e) => {
       })
     );
 
-    // ✅ Mark orders as confirmed
     await supabase
       .from('orders')
       .update({ status: 'confirmed' })
@@ -169,6 +181,7 @@ checkoutForm.addEventListener('submit', async (e) => {
       .eq('status', 'pending');
 
     alert('✅ Receipts sent and store owners notified!');
+    renderOrders(); // refresh confirmed view
   } catch (err) {
     console.error("❌ Receipt send failed:", err);
     alert('❌ Failed to send receipt(s). Please try again.');
