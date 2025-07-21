@@ -78,10 +78,6 @@ document.querySelectorAll('.delete-btn').forEach(btn => {
   });
 });
 
-
-totalEl.textContent = total.toFixed(2);
-const summary = orderSummary.join('\n');
-
 // 📨 Form submission
 checkoutForm.addEventListener('submit', async (e) => {
   e.preventDefault();
