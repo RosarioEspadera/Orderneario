@@ -1,0 +1,67 @@
+/* 🎯 Hero Section */
+.hero {
+  background: linear-gradient(135deg, #007bff, #00c6ff);
+  color: white;
+  padding: 80px 20px;
+  text-align: center;
+  border-radius: 0 0 20px 20px;
+}
+
+.hero h1 {
+  font-size: 2.5em;
+  margin-bottom: 20px;
+}
+
+.hero p {
+  font-size: 1.2em;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* 🖱️ Call-to-action button */
+.cta-btn {
+  background-color: #ffc107;
+  color: #333;
+  padding: 12px 20px;
+  font-weight: bold;
+  text-decoration: none;
+  border-radius: 8px;
+  display: inline-block;
+  margin-top: 30px;
+  transition: background-color 0.3s ease;
+}
+
+.cta-btn:hover {
+  background-color: #e0a800;
+}
+
+/* 👣 Footer */
+footer {
+  margin-top: 60px;
+  text-align: center;
+  color: #666;
+  font-size: 0.85em;
+}
+
+/* 📊 Intro grid (if used) */
+.intro-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 30px;
+  margin: 40px auto;
+  max-width: 960px;
+}
+
+.intro-card {
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 10px;
+  border-left: 4px solid #007bff;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+  text-align: left;
+}
+
+.intro-card h3 {
+  margin-top: 0;
+  color: #007bff;
+}
