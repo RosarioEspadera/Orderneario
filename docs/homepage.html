@@ -3,64 +3,47 @@
 <head>
   <meta charset="UTF-8" />
   <title>Orderneario</title>
-  <link rel="icon" href="favicon.ico" type="image/x-icon" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" href="favicon.ico" />
   <link rel="stylesheet" href="style.css" />
-   <link rel="stylesheet" href="homepage.css" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <link rel="stylesheet" href="homepage.css" />
 </head>
 <body>
- <nav class="tab-nav">
-      <a href="homepage.html">🏠 Home</a>
-      <a href="dashboard.html">📋 Dashboard</a>
-      <a href="map.html">🗺️ Map</a>
-      <a href="checkout.html">🧾 Checkout</a>
-      <a href="profile.html">👤 Profile</a>
-      <a href="chat.html">💬 Alerts</a>
-    </nav>
- <div id="homepageContainer">
- <section class="hero">
-  <h1>Welcome to Orderneario 🍽️</h1>
-  <p>Browse nearby dishes, place orders instantly, and get real-time updates — all in one delightful experience.</p>
-  <a href="map.html" class="cta-btn">📍 Explore Dishes</a>
-</section>
-<section class="intro-grid">
-  <div class="intro-card">
-    <h3>👤 Sign Up</h3>
-    <p>Create an account on <a href="profile.html">profile.html</a> — choose store owner or consumer role.</p>
+  <div id="homepageContainer">
+    <!-- 🍽️ Hero Section -->
+    <section class="hero">
+      <h1>Orderneario 🍽️</h1>
+      <p>Discover fresh local dishes near you. Tap to explore and enjoy.</p>
+      <a href="#menuPanel" class="cta-btn">🍛 View Menu</a>
+    </section>
+
+    <!-- 📋 Menu Panel -->
+    <section id="menuPanel">
+      <h2 id="menuTitle">🍽️ Menu</h2>
+      <ul id="menuList"></ul>
+    </section>
+
+    <!-- ℹ️ About Section -->
+    <section class="about">
+      <h2>About</h2>
+      <p>Orderneario connects hungry customers with store-uploaded menus in real time. No map needed, just flavor.</p>
+    </section>
+
+    <!-- 🧡 Footer -->
+    <footer>
+      &copy; 2025 Orderneario | Crafted with ❤️ by Rosario
+    </footer>
   </div>
-  <div class="intro-card">
-    <h3>📦 Place Orders</h3>
-    <p>Go to <a href="map.html">map.html</a>, browse local store menus, and order what you love.</p>
-  </div>
-  <div class="intro-card">
-    <h3>🧾 Checkout</h3>
-    <p>Visit <a href="checkout.html">checkout.html</a> to review your receipt and get an email confirmation.</p>
-  </div>
-  <div class="intro-card">
-    <h3>💬 Alerts</h3>
-    <p>Store owners can visit <a href="chat.html">chat.html</a> for real-time order notifications.</p>
-  </div>
-  <div class="intro-card">
-    <h3>📋 Manage Dishes</h3>
-    <p>Use <a href="dashboard.html">dashboard.html</a> to add/edit dishes and manage your storefront.</p>
-  </div>
-</section>
-<section class="about">
-  <h2>About Orderneario</h2>
-  <p>Orderneario is a location-aware food ordering experience built with:
-    <ul>
-      <li>🌍 Leaflet for maps</li>
-      <li>💾 Supabase for auth, storage, and real-time sync</li>
-      <li>💌 EmailJS for dual-sided email flows</li>
-    </ul>
-    It’s modular, scalable, and built with care for both store owners and hungry consumers.
-  </p>
-</section>
-<footer>
-  &copy; 2025 Orderneario | Crafted with ❤️ by Rosario
-</footer>
- </div>
+
+  <!-- 🔍 Bottom Navigation -->
+  <nav class="bottom-nav">
+    <a href="homepage.html">🏠 Home</a>
+    <a href="dashboard.html">📋 Dashboard</a>
+    <a href="checkout.html">🧾 Checkout</a>
+    <a href="profile.html">👤 Profile</a>
+    <a href="chat.html">💬 Alerts</a>
+  </nav>
+
   <script type="module" src="src/js/homepage.js"></script>
 </body>
 </html>
