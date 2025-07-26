@@ -9,8 +9,7 @@ const supabase = createClient(
 async function showMenu(storeId) {
   const { data: foods, error } = await supabase
   .from('foods')
-  .select('name, price, store_id, store:store_id(name)')
-  .eq('store_id', storeId);
+  .select('name, price, store_id, store:store_id(name)');
 
   if (error) {
     console.error('Error fetching menu:', error.message);
