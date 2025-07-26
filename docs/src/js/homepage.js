@@ -7,10 +7,10 @@ const supabase = createClient(
 
 // 🔥 Fetch and show menu for a given store ID
 async function showMenu(storeId) {
-  const { data: dishes, error } = await supabase
-    .from('dishes')
-    .select('name, price, store_id, store:store_id(name)')
-    .eq('store_id', storeId);
+  const { data: foods, error } = await supabase
+  .from('foods')
+  .select('name, price, store_id, store:store_id(name)')
+  .eq('store_id', storeId);
 
   if (error) {
     console.error('Error fetching menu:', error.message);
@@ -23,21 +23,21 @@ async function showMenu(storeId) {
 
   menuList.innerHTML = ''; // Clear previous items
 
-  if (dishes.length === 0) {
-    menuList.innerHTML = '<li>No dishes available for this store.</li>';
-  } else {
-    dishes.forEach(dish => {
-      const item = document.createElement('li');
+  if (foods.length === 0) {
+  menuList.innerHTML = '<li>No dishes available for this store.</li>';
+} else {
+  foods.forEach(dish => {
+    const item = document.createElement('li');
+    item.innerHTML = `
+      <div>
+        <strong>${dish.name}</strong> – ₱${dish.price}
+        <div class="store-label">🛍️ from ${dish.store?.name || `Store #${dish.store_id}`}</div>
+      </div>
+    `;
+    menuList.appendChild(item);
+  });
+}
 
-      item.innerHTML = `
-        <div>
-          <strong>${dish.name}</strong> – ₱${dish.price}
-          <div class="store-label">🛍️ from ${dish.store?.name || `Store #${dish.store_id}`}</div>
-        </div>
-      `;
-      menuList.appendChild(item);
-    });
-  }
 
   menuTitle.textContent = `🍽️ Menu for Store #${storeId}`;
   menuPanel.style.display = 'block';
