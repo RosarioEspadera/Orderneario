@@ -146,6 +146,11 @@ footer {
 .bottom-nav a:hover {
   color: #d35400;
 }
+.store-label {
+  font-size: 0.85rem;
+  color: #888;
+  margin-top: 0.25rem;
+}
 
 
 /* 📱 Mobile Responsiveness */
