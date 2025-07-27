@@ -41,9 +41,9 @@ let storeMarkers = {};
 function setupNavbar() {
   const nav = document.querySelector('.tab-nav');
   nav.innerHTML = userRole === 'store_owner'
-    ? `<a href="dashboard.html">📋 Dashboard</a><a href="map.html">🗺️ Map</a><a href="profile.html">👤 Profile</a>`
-    : `<a href="map.html">🗺️ Map</a><a href="profile.html">👤 Profile</a>`;
-
+    ? `<a href="dashboard.html">📋 Dashboard</a><a href="map.html">🗺️ Map</a><a href="homepage.html">🏠 Home</a><a href="checkout.html">🧾 Checkout</a><a href="profile.html">👤 Profile</a><a href="chat.html">💬 Alerts</a>`
+    : `<a href="map.html">🗺️ Map</a><a href="homepage.html">🏠 Home</a><a href="checkout.html">🧾 Checkout</a><a href="profile.html">👤 Profile</a><a href="chat.html">💬 Alerts</a>`;
+  
   const panel = document.getElementById(userRole === 'store_owner' ? 'storeUploadPanel' : 'mapLinkOnly');
   if (panel) panel.style.display = 'block';
 }
